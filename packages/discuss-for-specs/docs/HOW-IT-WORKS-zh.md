@@ -1,0 +1,339 @@
+# 工作原理
+
+本文档解释讨论模式系统的内部架构和机制。
+
+> 快速开始和安装说明，请参阅 [README](../README-zh.md)。
+
+---
+
+## 概述
+
+讨论模式采用 **单一 Skill + Snapshot Hook** 架构：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        AI 平台                                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │                         Skill                               │ │
+│  │  ┌──────────────────────────────────────────────────────┐  │ │
+│  │  │                   discuss-for-specs                   │  │ │
+│  │  │  • 三种角色（苏格拉底提问者、魔鬼代言人、知识连接者）   │  │ │
+│  │  │  • 问题类型区分                                        │  │ │
+│  │  │  • 讨论优先原则                                        │  │ │
+│  │  │  • 问题追踪与共识识别                                  │  │ │
+│  │  │  • 输出策略（不重复）                                  │  │ │
+│  │  └──────────────────────────────────────────────────────┘  │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │                    Hook（仅 L2 平台）                       │ │
+│  │  ┌─────────────────────────────────────────────────────┐   │ │
+│  │  │   check_precipitation（基于快照的检测）               │   │ │
+│  │  │   （对话结束时触发 - Stop hook）                      │   │ │
+│  │  └─────────────────────────────────────────────────────┘   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+> **注意**：之前的版本使用两个 Hook（`track_file_edit` + `check_precipitation`）。
+> 自 2026-01-30 起，已简化为单一的基于快照的 stop hook。
+> 参见 [D01: 基于快照的检测](../.discuss/2026-01-30/multi-agent-platform-support/decisions/D01-snapshot-based-detection.md)。
+
+---
+
+## 两级平台架构
+
+根据 Hook 支持情况，平台被分为两个能力级别：
+
+| 级别 | 能力 | 所需 Hook | 用户体验 |
+|------|------|-----------|----------|
+| **L1** | 讨论引导 | 无 | 完整的讨论功能，无自动提醒 |
+| **L2** | + 快照检测 + 自动提醒 | 仅 Stop | 自动检测并提醒未沉淀的决策 |
+
+### 平台分布
+
+| 平台 | 级别 | 原因 |
+|------|------|------|
+| Claude Code | L2 | 支持 Stop hook |
+| Cursor | L2 | 支持 stop hook |
+| Cline | L2 | 支持 PostToolUse/TaskCancel |
+| Gemini CLI | L2 | 支持 AfterAgent hook |
+| Kilocode | L1 | 无 Hook 支持 |
+| OpenCode | L1 | 无 Hook 支持 |
+| Codex CLI | L1 | 仅有 notify（不是真正的 Hook） |
+| Windsurf | - | 无 Hook 支持（计划中） |
+| Roo Code | - | 无 Hook 支持（计划中） |
+| Trae | - | 无 Hook 支持（计划中） |
+
+> L1 平台使用额外的 Skill 引导来鼓励主动沉淀决策。
+> 参见 [D05: L1 Skill 引导](../.discuss/2026-01-30/multi-agent-platform-support/decisions/D05-l1-skill-guidance.md)。
+
+---
+
+## Skill 架构
+
+### discuss-for-specs
+
+**目的**：促进深度讨论、追踪问题、引导决策、管理结构化输出。
+
+**核心组件**：
+
+| 组件 | 描述 |
+|------|------|
+| **三种角色** | 苏格拉底提问者、魔鬼代言人、知识连接者 |
+| **问题类型** | 事实型 / 设计型 / 开放型问题采用不同策略 |
+| **讨论优先** | 先提问再输出；不要猜测 |
+| **问题追踪** | 生命周期：⚪ 待讨论 → 🔵 讨论中 → ✅ 已确认 |
+| **输出策略** | outline.md 和响应之间不重复 |
+| **共识规则** | 什么是共识，什么不是共识 |
+
+**职责**：
+- 解析用户意图，识别讨论主题
+- 追踪问题生命周期
+- 分析趋势，检测共识
+- 每轮结束后渲染和更新 `outline.md`
+- 在 `decisions/` 目录创建决策文档
+
+---
+
+## Hooks 架构（L2 平台）
+
+Hooks 自动化处理不需要 AI 智能的"流程性工作"。
+
+### 设计原则
+
+> **智能工作交给 Agent，流程工作交给 Hook**
+
+| 工作类型 | 处理者 | 示例 |
+|----------|--------|------|
+| 智能工作 | AI Skill | 理解问题、分析方案、识别共识 |
+| 流程工作 | Python Hooks | 文件状态检测、过期检查、提醒生成 |
+
+### 基于快照的检测
+
+**触发时机**：AI 对话结束时
+- Claude Code：`Stop` 事件
+- Cursor：`stop` 事件
+
+**核心逻辑**：
+1. 扫描 `.discuss/` 目录中的活跃讨论（24小时内修改过）
+2. 与 `.discuss/.snapshot.yaml` 比较当前文件状态
+3. 如果 `outline.md` mtime 变化 → `change_count++`
+4. 如果 `decisions/` 或 `notes/` 变化 → `change_count = 0`（重置）
+5. 当 `change_count >= threshold` 时触发提醒
+6. 保存更新后的快照
+
+**流程图**：
+
+```
+Stop Hook 触发
+        │
+        ▼
+┌─────────────────────┐
+│ 加载 .snapshot.yaml │
+└─────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────┐
+│ 查找活跃讨论（24小时内）        │
+└─────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────┐
+│ 对每个讨论：                    │
+│  • 比较 outline.md mtime        │
+│  • 比较 decisions/ 文件         │
+│  • 比较 notes/ 文件             │
+│  • 更新 change_count            │
+└─────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────┐
+│ change_count >= threshold?      │
+│  是 → 显示提醒                  │
+│  否 → 允许继续                  │
+└─────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────┐
+│ 保存更新后的 .snapshot.yaml     │
+└─────────────────────────────────┘
+```
+
+### 检测参数
+
+| 参数 | 值 | 描述 |
+|------|-----|------|
+| 检测窗口 | 24 小时 | 仅检查此时间窗口内修改过的讨论 |
+| 追踪方法 | mtime | 使用文件修改时间进行变更检测 |
+| 建议阈值 | 3 | 3 次 outline 变更后建议沉淀 |
+| 强制阈值 | 6 | 6 次 outline 变更后强制沉淀 |
+
+---
+
+## 讨论目录结构
+
+每个讨论创建一个结构化目录：
+
+```
+.discuss/YYYY-MM-DD/topic-name/
+├── outline.md          # 实时进度追踪
+├── decisions/          # 沉淀的决策
+│   ├── D01-topic.md
+│   ├── D02-topic.md
+│   └── ...
+└── notes/              # 参考资料
+    └── ...
+```
+
+> **注意**：之前的版本使用 `discuss/`（无点号）。自 2026-01-28 起，
+> 标准化位置是 `.discuss/`（隐藏目录）。
+> 参见 [架构决策 D8](../specs/discuss-for-specs-v1/3-architecture.md#d8-discussion-directory-structure)。
+
+### outline.md
+
+实时追踪讨论状态：
+
+```markdown
+# 讨论：主题名称
+
+## 🔵 当前焦点
+- 当前正在讨论的问题
+
+## ⚪ 待讨论
+- [ ] Q1：未回答的问题
+
+## ✅ 已确认
+| 决策 | 描述 | 文档 |
+|------|------|------|
+| D1: 第一个决策 | 简述 | [D01](./decisions/D01-xxx.md) |
+
+## ❌ 已否决
+- （被否决的选项及原因）
+```
+
+### .snapshot.yaml
+
+状态追踪**由 hooks 管理**，存储在 `.discuss/.snapshot.yaml`：
+
+```yaml
+# .discuss/.snapshot.yaml
+version: 1
+config:
+  stale_threshold: 3          # N 次 outline 变更后建议提醒
+
+discussions:
+  "2026-01-30/topic-name":
+    outline:
+      mtime: 1706621400.0     # Unix 时间戳
+      change_count: 2         # outline 变更但 decisions 未更新的次数
+    decisions:
+      - name: "D01-xxx.md"
+        mtime: 1706620000.0
+    notes:
+      - name: "analysis.md"
+        mtime: 1706619000.0
+```
+
+> **注意**：之前的版本在每个讨论目录中使用 `meta.yaml`。
+> 自 2026-01-30 起，所有状态追踪都合并到 `.snapshot.yaml` 中。
+> 参见 [D02: 移除 meta.yaml](../.discuss/2026-01-30/multi-agent-platform-support/decisions/D02-remove-meta-yaml.md)。
+
+---
+
+## 安装后的组件
+
+安装后，组件分布如下：
+
+### 全局（用户级别）
+
+```
+~/.discuss-for-specs/
+├── hooks/                    # Python hook 脚本
+│   ├── common/               # 共享工具
+│   │   ├── snapshot_manager.py   # 快照状态管理
+│   │   ├── file_utils.py         # 文件操作
+│   │   ├── logging_utils.py      # 日志工具
+│   │   └── platform_utils.py     # 平台检测
+│   └── stop/                 # 沉淀检查 hook
+│       └── check_precipitation.py
+└── logs/                     # Hook 执行日志
+    └── discuss-hooks-YYYY-MM-DD.log
+```
+
+### 平台特定
+
+**Claude Code**：
+```
+~/.claude/
+├── skills/
+│   └── discuss-for-specs/         # 单一合并的 skill
+└── settings.json             # Hooks 配置
+```
+
+**Cursor**：
+```
+~/.cursor/
+├── skills/
+│   └── discuss-for-specs/         # 单一合并的 skill
+└── hooks.json                # Hooks 配置
+```
+
+### 项目级别（使用 --target）
+
+使用 `--target /path/to/project` 时：
+```
+/path/to/project/
+└── .cursor/                  # 或 .claude/
+    └── skills/
+        └── discuss-for-specs/
+```
+
+---
+
+## 日志
+
+Hooks 记录所有操作用于调试：
+
+**位置**：`~/.discuss-for-specs/logs/discuss-hooks-YYYY-MM-DD.log`
+
+**格式**：
+```
+2026-01-30 22:31:40 | INFO     | discuss-hooks | Hook Started: check_precipitation
+2026-01-30 22:31:40 | DEBUG    | discuss-hooks | Loaded snapshot with 3 discussions
+2026-01-30 22:31:40 | DEBUG    | discuss-hooks | Found 1 active discussion(s)
+2026-01-30 22:31:40 | DEBUG    | discuss-hooks | Outline modified, change_count: 2 -> 3
+2026-01-30 22:31:40 | INFO     | discuss-hooks | Suggesting update: 1 stale item(s)
+2026-01-30 22:31:40 | INFO     | discuss-hooks | Hook Ended: check_precipitation [SUCCESS]
+```
+
+---
+
+## 平台支持
+
+| 平台 | 级别 | Skills | Hooks | 状态 |
+|------|------|--------|-------|------|
+| Claude Code | L2 | ✅ | ✅ | 就绪 |
+| Cursor | L2 | ✅ | ✅ | 就绪 |
+| Kilocode | L1 | ✅ | - | 就绪 |
+| OpenCode | L1 | ✅ | - | 就绪 |
+| Codex CLI | L1 | ✅ | - | 就绪 |
+| Cline | L2 | ✅ | ✅ | 计划中 |
+| Gemini CLI | L2 | ✅ | ✅ | 计划中 |
+| Windsurf | - | - | - | 计划中 |
+| Roo Code | - | - | - | 计划中 |
+
+---
+
+## 相关文档
+
+- [README](../README-zh.md) - 快速开始和安装
+- [AGENTS.md](../AGENTS.md) - AI agent 指南
+- [架构设计](../specs/discuss-for-specs-v1/3-architecture.md) - 设计决策
+- [多 Agent 平台支持](../.discuss/2026-01-30/multi-agent-platform-support/outline.md) - 平台扩展讨论
+- [讨论记录](../.discuss/) - 历史讨论
+
+---
+
+**最后更新**：2026-01-30

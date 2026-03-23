@@ -1,0 +1,58 @@
+# Discussion Metadata
+topic: "Discussion Mode Feature Optimization"
+created: 2026-01-28
+current_round: 13
+
+# Configuration
+config:
+  stale_threshold: 3
+
+# Decision tracking
+decisions:
+  - id: D01
+    title: "Skill Architecture"
+    status: confirmed
+    confirmed_at: 5
+    doc_path: "decisions/D01-skill-architecture.md"
+  - id: D02
+    title: "Directory Structure"
+    status: confirmed
+    confirmed_at: 2
+    doc_path: "decisions/D02-directory-structure.md"
+  - id: D03
+    title: "meta.yaml Programmatic Design"
+    status: confirmed
+    confirmed_at: 7
+    doc_path: "decisions/D03-meta-yaml-design.md"
+  - id: D04
+    title: "Hook Refactoring Plan"
+    status: confirmed
+    confirmed_at: 7
+    doc_path: "decisions/D04-hook-refactoring.md"
+  - id: D05
+    title: "Post-Discussion Guidance"
+    status: confirmed
+    confirmed_at: 9
+    doc_path: "decisions/D05-post-discussion-guidance.md"
+  - id: D06
+    title: "Response Depth Enhancement"
+    status: confirmed
+    confirmed_at: 11
+    doc_path: "decisions/D06-response-depth.md"
+  - id: D07
+    title: "Directory Consolidation"
+    status: confirmed
+    confirmed_at: 12
+    doc_path: "decisions/D07-directory-consolidation.md"
+
+# File status tracking
+file_status:
+  outline:
+    last_modified_round: 1
+    pending_update: false
+  decisions:
+    last_modified_round: 0
+    pending_update: false
+  notes:
+    last_modified_round: 0
+    pending_update: false
