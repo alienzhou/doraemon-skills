@@ -1,116 +1,110 @@
-# Doraemon Skills 🤖
+# Doraemon Skills
 
-> 哆啦A梦的百宝袋 —— 一个 Agent Skills 集合仓库，既可以自己用，也可以分享给别人。
+> 哆啦A梦的百宝袋 —— Agent Skills monorepo，自用 + 分享。
 
 ## 快速安装
 
-任何人都可以通过 [skills CLI](https://github.com/vercel-labs/skills) 一键安装本仓库的 skills：
-
 ```bash
-# 列出所有可用 skills
-npx skills add alienzhou/doraemon-skills --list
-
 # 安装全部 skills
 npx skills add alienzhou/doraemon-skills --all
 
-# 安装指定 skill
-npx skills add alienzhou/doraemon-skills --skill <skill-name>
+# 列出可用 skills
+npx skills add alienzhou/doraemon-skills --list
 
-# 安装到指定 agent（如 cursor、claude-code 等）
-npx skills add alienzhou/doraemon-skills --skill <skill-name> -a cursor
+# 安装指定 skill
+npx skills add alienzhou/doraemon-skills --skill discuss-for-specs
+npx skills add alienzhou/doraemon-skills --skill skill-reviewer
+npx skills add alienzhou/doraemon-skills --skill agent-better-checkpoint
+
+# 指定安装到某个 agent
+npx skills add alienzhou/doraemon-skills --skill discuss-for-specs -a cursor
 ```
 
-支持的 Agent 包括：Cursor、Claude Code、GitHub Copilot、Codex、Cline、Windsurf、Roo Code、Gemini CLI 等 [40+ 种 agent](https://github.com/vercel-labs/skills#supported-agents)。
+兼容 40+ 种 agent：Cursor、Claude Code、GitHub Copilot、Codex、Cline、Windsurf、Gemini CLI 等。详见 [skills CLI 文档](https://github.com/vercel-labs/skills#supported-agents)。
+
+对于 `discuss-for-specs` 和 `agent-better-checkpoint`，它们有配套的 hooks 和运行时脚本，建议使用各自的 npm CLI 安装以获得完整体验：
+
+```bash
+# discuss-for-specs（含 hooks 自动提醒）
+npx @vibe-x/discuss-for-specs install -p cursor
+
+# agent-better-checkpoint（含 checkpoint 脚本和 stop hook）
+npx @vibe-x/agent-better-checkpoint --platform cursor
+```
+
+## Skills 列表
+
+| Skill | 说明 | npm 包 |
+|-------|------|--------|
+| [discuss-for-specs](skills/discuss-for-specs/) | AI 驱动的结构化讨论助手，帮你把模糊想法变成清晰可执行的规格 | [`@vibe-x/discuss-for-specs`](https://www.npmjs.com/package/@vibe-x/discuss-for-specs) |
+| [agent-better-checkpoint](skills/agent-better-checkpoint/) | 将 AI 编辑变为语义化 Git commits，替代不透明的 checkpoint | [`@vibe-x/agent-better-checkpoint`](https://www.npmjs.com/package/@vibe-x/agent-better-checkpoint) |
+| [skill-reviewer](skills/skill-reviewer/) | Skill 质量审查工具，支持定义审查和执行审查两种模式 | — |
 
 ## 仓库结构
 
 ```
 doraemon-skills/
-├── README.md                   # 你正在看的文件
-├── LICENSE                     # MIT License
-├── skills/                     # 所有 skills 存放在这里
-│   ├── <skill-name>/           # 每个 skill 一个目录
-│   │   ├── SKILL.md            # 必须：skill 元信息 + 指令
-│   │   ├── scripts/            # 可选：可执行脚本
-│   │   ├── references/         # 可选：参考文档
-│   │   └── assets/             # 可选：模板、资源文件
-│   └── ...
-└── template/                   # skill 模板，用于快速创建新 skill
-    └── SKILL.md
+├── skills/                          # Skill 本体（SKILL.md + references）
+│   ├── discuss-for-specs/           #   npx skills add 能发现的部分
+│   ├── agent-better-checkpoint/
+│   └── skill-reviewer/
+│
+├── packages/                        # npm 包、CLI、构建脚本、文档
+│   ├── discuss-for-specs/           #   @vibe-x/discuss-for-specs
+│   ├── agent-better-checkpoint/     #   @vibe-x/agent-better-checkpoint
+│   └── skill-reviewer/              #   文档和资源（无 npm 包）
+│
+├── shared/                          # 跨项目共享代码
+│   └── hooks/                       #   共享 hooks 基础设施
+│       └── common/                  #   file_utils, logging_utils 等
+│
+├── archives/                        # 历史讨论记录（.discuss 归档）
+│   ├── discuss-for-specs/
+│   ├── agent-better-checkpoint/
+│   └── skill-reviewer/
+│
+├── LICENSE
+├── README.md
+└── .gitignore
 ```
 
-## 可用 Skills
+### 分层设计
 
-| Skill | 说明 |
-|-------|------|
-| [commit-message-zh](skills/commit-message-zh/) | 生成规范的中英双语 Git commit message |
+每个 skill 都分为三层，复杂度渐进：
 
-> 持续添加中……
+| 层 | 目录 | 说明 | 安装方式 |
+|---|------|------|---------|
+| **Skill 本体** | `skills/<name>/` | SKILL.md + references，纯 Markdown | `npx skills add alienzhou/doraemon-skills` |
+| **npm 包** | `packages/<name>/` | CLI 安装器、hooks、运行时脚本 | `npx @vibe-x/<name>` |
+| **共享模块** | `shared/hooks/` | 跨 skill 共享的 hooks 基础设施 | 由 npm 包内部引用 |
 
-## 如何创建新 Skill
+## 迁移自
 
-### 1. 使用模板
+本仓库合并自以下独立仓库：
 
-复制 `template/` 目录并重命名为你的 skill 名称：
+| 仓库 | 状态 |
+|------|------|
+| [alienzhou/skill-reviewer](https://github.com/alienzhou/skill-reviewer) | 待归档，指向此仓库 |
+| [alienzhou/skill-discuss-for-specs](https://github.com/alienzhou/skill-discuss-for-specs) | 待归档，指向此仓库 |
+| [alienzhou/agent-better-checkpoint](https://github.com/alienzhou/agent-better-checkpoint) | 待归档，指向此仓库 |
+
+## 开发
+
+### 添加新 Skill
+
+1. 在 `skills/` 下创建目录，放入 `SKILL.md`
+2. 遵循 [Agent Skills 规范](https://agentskills.io/specification)
+3. 如需 npm 包分发，在 `packages/` 下创建对应目录
+
+### npm 包
 
 ```bash
-cp -r template skills/my-new-skill
+# discuss-for-specs
+cd packages/discuss-for-specs && npm install && npm run build
+
+# agent-better-checkpoint
+cd packages/agent-better-checkpoint
 ```
-
-### 2. 编辑 SKILL.md
-
-每个 skill 只需要一个 `SKILL.md` 文件，包含 YAML frontmatter 和 Markdown 指令：
-
-```markdown
----
-name: my-new-skill
-description: 清晰描述这个 skill 做什么、什么时候应该被触发。
----
-
-# My New Skill
-
-在这里写 agent 需要遵循的具体指令。
-
-## 使用场景
-- 场景 1
-- 场景 2
-
-## 步骤
-1. 第一步
-2. 第二步
-```
-
-### 3. 命名规范
-
-遵循 [Agent Skills 规范](https://agentskills.io/specification)：
-
-- `name` 字段：小写字母、数字、连字符，最多 64 字符
-- `name` 必须与目录名一致
-- `description` 字段：最多 1024 字符，需清楚说明 skill 的功能和触发时机
-
-### 4. 最佳实践
-
-- `SKILL.md` 主体控制在 500 行以内
-- 详细的参考资料放到 `references/` 目录
-- 可执行脚本放到 `scripts/` 目录
-- 保持 skill 的专注性 —— 一个 skill 做一件事
-
-## 发布与分享
-
-本仓库遵循 [Agent Skills 开放规范](https://agentskills.io)，兼容以下平台：
-
-- **[skills.sh](https://skills.sh/)** — 最大的 Agent Skills 目录，由 Vercel 维护的 `npx skills` CLI 驱动
-- **[ClawHub](https://clawhub.ai/)** — 另一个 skill 发布平台
-
-只要将 skills 推送到 GitHub，任何人就可以通过 `npx skills add alienzhou/doraemon-skills` 安装，无需额外的发布步骤。skills.sh 会自动索引公开仓库中的 skills。
-
-## 关于 Agent Skills 规范
-
-Agent Skills 是一种轻量级的开放格式，用于扩展 AI agent 的能力。核心概念：
-
-1. **渐进式加载**：Agent 启动时只读取 `name` 和 `description`（约 100 tokens），激活时才加载完整指令
-2. **跨 Agent 兼容**：同一个 skill 可以在 Cursor、Claude Code、Copilot 等不同 agent 中使用
-3. **自包含**：每个 skill 目录包含它需要的一切，便于版本管理和分享
 
 ## License
 
