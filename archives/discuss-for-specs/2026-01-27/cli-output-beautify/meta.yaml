@@ -1,0 +1,51 @@
+# Discussion Metadata
+topic: "CLI Output Beautification"
+created: 2026-01-27
+current_round: 5
+
+# Status
+status: concluded
+
+# Decision tracking
+decisions:
+  - id: D01
+    title: "Use npm libraries for beautification"
+    status: confirmed
+    confirmed_at: 3
+    doc_path: "./decisions/D01-cli-beautification.md"
+
+  - id: D02
+    title: "ASCII Art Banner: Block font style (DISCUSS)"
+    status: confirmed
+    confirmed_at: 3
+    doc_path: "./decisions/D01-cli-beautification.md"
+
+  - id: D03
+    title: "Color scheme: Single highlight + semantic colors"
+    status: confirmed
+    confirmed_at: 3
+    doc_path: "./decisions/D01-cli-beautification.md"
+
+  - id: D04
+    title: "Library stack: chalk + ora + figlet + boxen"
+    status: confirmed
+    confirmed_at: 4
+    doc_path: "./decisions/D01-cli-beautification.md"
+
+  - id: D05
+    title: "Spinner style: dots"
+    status: confirmed
+    confirmed_at: 4
+    doc_path: "./decisions/D01-cli-beautification.md"
+
+  - id: D06
+    title: "Error styling: No border, arrow style, minimal red"
+    status: confirmed
+    confirmed_at: 5
+    doc_path: "./decisions/D01-cli-beautification.md"
+
+  - id: D07
+    title: "Non-color fallback: Auto-detect + --no-color flag"
+    status: confirmed
+    confirmed_at: 5
+    doc_path: "./decisions/D01-cli-beautification.md"

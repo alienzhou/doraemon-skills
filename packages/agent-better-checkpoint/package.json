@@ -1,0 +1,40 @@
+{
+  "name": "@vibe-x/agent-better-checkpoint",
+  "version": "0.3.4",
+  "description": "Semantic Git checkpoint commits for AI coding sessions",
+  "type": "module",
+  "bin": {
+    "agent-better-checkpoint": "./bin/cli.mjs"
+  },
+  "files": [
+    "bin/",
+    "platform/",
+    "skill/",
+    "LICENSE",
+    "scripts/"
+  ],
+  "scripts": {
+    "release:check": "node ./scripts/release-check.mjs",
+    "preversion": "npm run release:check",
+    "prepublishOnly": "npm run release:check"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "git",
+    "checkpoint",
+    "cursor",
+    "claude",
+    "conventional-commits",
+    "skills-sh"
+  ],
+  "license": "MIT",
+  "author": "alienzhou",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alienzhou/agent-better-checkpoint.git"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

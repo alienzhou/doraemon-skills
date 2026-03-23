@@ -1,0 +1,8 @@
+---
+name: discuss-for-specs
+description: "You MUST use this skill when the user wants to discuss, analyze, or explore ideas before making decisions. Triggers on: \"讨论一下\", \"我想聊聊\", \"帮我分析\", \"我们来探讨\", \"let's discuss\", \"I want to talk about\", or any request for in-depth conversation about architecture, design choices, or technical decisions. Usage: (1) Explicit - use slash command to select this skill; (2) Implicit - automatically triggered by keywords above. Provides structured discussion facilitation with decision precipitation."
+license: MIT
+metadata:
+  author: vibe-x-ai
+  version: "{{version}}"
+---

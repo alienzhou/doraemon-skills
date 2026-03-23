@@ -1,0 +1,77 @@
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# === Node.js ===
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# === Build outputs ===
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+sdist/
+var/
+wheels/
+
+# === npm package build artifacts ===
+packages/discuss-for-specs/dist/
+packages/discuss-for-specs/hooks/
+packages/discuss-for-specs/config/
+packages/discuss-for-specs/node_modules/
+
+# === Environment ===
+.env
+.env.local
+.env.*.local
+
+# === Logs ===
+*.log
+logs/
+
+# === Agent local directories (install artifacts, not source) ===
+.agents/
+.claude/
+.cursor/
+.vibe-x/
+
+# === Misc ===
+.agentlens/
+tmp/
+temp/
+.tmp/

@@ -1,0 +1,63 @@
+# Discussion metadata
+topic: skill-discuss-for-specs Architecture Design
+created: 2026-01-17
+current_round: 11
+
+# Staleness configuration
+max_stale_rounds: 3
+
+# Decision sync status
+decisions:
+  - id: D1
+    title: "Skill Architecture"
+    status: confirmed
+    confirmed_at: 4
+    doc_path: "decisions/01-skill-architecture.md"
+    
+  - id: D2
+    title: "Skill Naming"
+    status: confirmed
+    confirmed_at: 8
+    doc_path: "decisions/02-skill-naming.md"
+    
+  - id: D3
+    title: "Intelligence vs Process Separation"
+    status: confirmed
+    confirmed_at: 5
+    doc_path: "decisions/03-intelligence-vs-process-separation.md"
+    
+  - id: D4
+    title: "Precipitation Detection Mechanism"
+    status: confirmed
+    confirmed_at: 7
+    doc_path: "decisions/04-precipitation-detection-mechanism.md"
+    
+  - id: D5
+    title: "Reminder Mechanism"
+    status: confirmed
+    confirmed_at: 7
+    doc_path: "decisions/05-reminder-mechanism.md"
+    
+  - id: D6
+    title: "Global Configuration Mechanism"
+    status: confirmed
+    confirmed_at: 7
+    doc_path: "decisions/06-global-configuration-mechanism.md"
+    
+  - id: D7
+    title: "Project Directory Structure"
+    status: confirmed
+    confirmed_at: 11
+    doc_path: "decisions/07-project-directory-structure.md"
+    
+  - id: D8
+    title: "Multi-Platform Output"
+    status: confirmed
+    confirmed_at: 11
+    doc_path: "decisions/08-multi-platform-output.md"
+    
+  - id: D9
+    title: "Implementation Language"
+    status: confirmed
+    confirmed_at: 11
+    doc_path: "decisions/09-implementation-language.md"

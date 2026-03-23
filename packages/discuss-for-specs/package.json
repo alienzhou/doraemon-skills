@@ -1,0 +1,73 @@
+{
+  "name": "@vibe-x/discuss-for-specs",
+  "version": "0.5.0",
+  "description": "Cross-platform skills and hooks for AI-powered discussion mode. Supports Claude Code, Cursor, Cline, Kilocode, OpenCode, Codex CLI, Trae, Qoder, and Roo-Code.",
+  "keywords": [
+    "claude-code",
+    "cursor",
+    "cline",
+    "kilocode",
+    "opencode",
+    "codex-cli",
+    "trae",
+    "qoder",
+    "roo-code",
+    "ai-assistant",
+    "skills",
+    "hooks",
+    "discussion-mode",
+    "specs",
+    "specification"
+  ],
+  "author": "zhouhongxuan",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alienzhou/skill-discuss-for-specs.git"
+  },
+  "homepage": "https://github.com/alienzhou/skill-discuss-for-specs#readme",
+  "bugs": {
+    "url": "https://github.com/alienzhou/skill-discuss-for-specs/issues"
+  },
+  "bin": {
+    "discuss-for-specs": "./bin/cli.js"
+  },
+  "main": "./src/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "dist/",
+    "hooks/",
+    "config/",
+    "assets/"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node --test tests/*.test.js",
+    "test:watch": "node --test --watch tests/*.test.js",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "boxen": "^8.0.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "figlet": "^1.8.0",
+    "js-yaml": "^4.1.0",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0"
+  }
+}

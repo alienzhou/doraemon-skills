@@ -1,0 +1,25 @@
+# Discussion metadata (maintained by Hook program)
+created_at: "2026-01-20T10:00:00+08:00"
+current_run: 5
+
+# Configuration
+config:
+  suggest_update_runs: 3
+  force_update_runs: 10
+
+# File status tracking
+file_status:
+  outline_last_run: 5
+  decisions_last_run: 0
+
+# Confirmed decisions (for record keeping, not maintained by AI)
+confirmed_decisions:
+  - id: D1
+    title: "meta.yaml only records status"
+    confirmed_at_run: 5
+  - id: D2
+    title: "decisions detection only cares about any updates"
+    confirmed_at_run: 5
+  - id: D3
+    title: "hooks configuration placed globally"
+    confirmed_at_run: 5

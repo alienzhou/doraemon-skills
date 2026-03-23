@@ -1,0 +1,35 @@
+# Discussion metadata
+topic: "Adopting spec-kit's cross-platform distribution architecture"
+created: 2026-01-19
+current_round: 6
+
+# Stale detection configuration
+max_stale_rounds: 3
+
+# Decision sync status
+decisions:
+  - id: D1
+    title: "Skill as primary distribution format"
+    status: confirmed
+    confirmed_at: 2
+    doc_path: "decisions/D01-skill-as-primary-format.md"
+  - id: D2
+    title: "Preserve headers separation design"
+    status: confirmed
+    confirmed_at: 3
+    doc_path: "decisions/D02-headers-separation.md"
+  - id: D3
+    title: "Adopt centralized configuration management"
+    status: confirmed
+    confirmed_at: 5
+    doc_path: "decisions/D03-centralized-config.md"
+  - id: D4
+    title: "Distribute installation commands via npm"
+    status: confirmed
+    confirmed_at: 5
+    doc_path: "decisions/D04-npm-distribution.md"
+  - id: D5
+    title: "npm package design: discuss-skills + Node.js"
+    status: confirmed
+    confirmed_at: 6
+    doc_path: "decisions/D05-npm-package-design.md"
