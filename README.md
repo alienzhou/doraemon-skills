@@ -39,6 +39,7 @@ npx @vibe-x/agent-better-checkpoint --platform cursor
 | [discuss-for-specs](skills/discuss-for-specs/) | AI 驱动的结构化讨论助手，帮你把模糊想法变成清晰可执行的规格 | [`@vibe-x/discuss-for-specs`](https://www.npmjs.com/package/@vibe-x/discuss-for-specs) |
 | [agent-better-checkpoint](skills/agent-better-checkpoint/) | 将 AI 编辑变为语义化 Git commits，替代不透明的 checkpoint | [`@vibe-x/agent-better-checkpoint`](https://www.npmjs.com/package/@vibe-x/agent-better-checkpoint) |
 | [skill-reviewer](skills/skill-reviewer/) | Skill 质量审查工具，支持定义审查和执行审查两种模式 | — |
+| [thinking-partner](skills/thinking-partner/) | 思考伙伴模式，扮演苏格拉底提问者/魔鬼代言人/知识连接者，专注深度讨论而非写代码 | — |
 
 ## 仓库结构
 
@@ -47,7 +48,8 @@ doraemon-skills/
 ├── skills/                          # Skill 本体（SKILL.md + references）
 │   ├── discuss-for-specs/           #   npx skills add 能发现的部分
 │   ├── agent-better-checkpoint/
-│   └── skill-reviewer/
+│   ├── skill-reviewer/
+│   └── thinking-partner/
 │
 ├── packages/                        # npm 包、CLI、构建脚本、文档
 │   ├── discuss-for-specs/           #   @vibe-x/discuss-for-specs
