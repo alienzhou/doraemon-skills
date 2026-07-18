@@ -1,0 +1,8 @@
+{
+  "name": "product-thinking-coach",
+  "version": "1.0.0",
+  "ks-meta": {
+    "displayName": "产品思维教练",
+    "platform": ["MyFlicker-Work模式", "MyFlicker-Code模式"]
+  }
+}

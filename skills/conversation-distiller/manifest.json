@@ -1,0 +1,8 @@
+{
+  "name": "conversation-distiller",
+  "version": "1.0.1",
+  "ks-meta": {
+    "displayName": "对话蒸馏器",
+    "platform": ["MyFlicker-Work模式", "MyFlicker-Code模式"]
+  }
+}
