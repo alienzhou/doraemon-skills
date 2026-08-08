@@ -70,8 +70,14 @@ logs/
 .cursor/
 .vibe-x/
 
+# === img-squeeze 中间产物 ===
+*.squeezed/
+.squeezed/
+*.orig.*
+
 # === Misc ===
 .agentlens/
+.discuss/
 tmp/
 temp/
 .tmp/
