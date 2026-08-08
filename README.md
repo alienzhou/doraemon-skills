@@ -43,6 +43,7 @@ npx @vibe-x/agent-better-checkpoint --platform cursor
 | [ops-logging](skills/ops-logging/) | 为新功能和数据流建设长期、结构化、可排障的日志 | — |
 | [ops-troubleshooting](skills/ops-troubleshooting/) | 结合日志、运行证据和代码还原时间线并定位根因 | — |
 | [ops-diagnostic](skills/ops-diagnostic/) | 证据不足时用竞争假设和判别性埋点完成诊断 | — |
+| [img-squeeze](skills/img-squeeze/) | 高质量图片压缩，质量不低于 TinyPNG，体积平均只有它的 53% | — |
 
 ## 仓库结构
 
@@ -55,7 +56,8 @@ doraemon-skills/
 │   ├── thinking-partner/
 │   ├── ops-logging/
 │   ├── ops-troubleshooting/
-│   └── ops-diagnostic/
+│   ├── ops-diagnostic/
+│   └── img-squeeze/                 #   带运行时脚本（scripts/squeeze.py）
 │
 ├── packages/                        # npm 包、CLI、构建脚本、文档
 │   ├── discuss-for-specs/           #   @vibe-x/discuss-for-specs
