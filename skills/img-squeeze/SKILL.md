@@ -15,17 +15,7 @@ description: "高质量图片压缩工具，质量不低于 TinyPNG，体积平�
 
 ## 使用方式
 
-**每次调用前，先用脚本相对 SKILL.md 的位置定位它：**
-
-本 SKILL.md 所在目录即为 skill 根目录，脚本路径为 `<skill_dir>/scripts/squeeze.py`。
-各 agent 平台会把已安装 skill 的目录路径暴露给模型——用你当前平台的方式拿到这个目录，再拼接 `scripts/squeeze.py`。
-
-例如，若已知 skill 安装在 `~/.cursor/skills/img-squeeze`，则脚本为 `~/.cursor/skills/img-squeeze/scripts/squeeze.py`。
-若无法确定目录，可先查找：
-
-```bash
-SQUEEZE=$(find ~ -maxdepth 6 -path '*/img-squeeze/scripts/squeeze.py' 2>/dev/null | head -1)
-```
+脚本在与本 SKILL.md 同级的 `scripts/squeeze.py`。下文示例中的 `<skill_dir>` 指你加载到的 skill 目录（包含本 SKILL.md 的目录，在技能 catalog / skill_content 的 directory 里给出），运行时直接代入实际路径即可，装在全局或项目级都同样适用。
 
 ### 前置依赖（可选，缺失则跳过对应格式）
 
