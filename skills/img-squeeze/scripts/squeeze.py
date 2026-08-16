@@ -207,6 +207,10 @@ def compress_one(src: Path, out_dir: Path, min_ssim: float, verbose: bool,
             shutil.copy2(best["dst"], src)
             out_path = src
         else:
+            # 原地模式但胜出格式与源不同（如 PNG 源、AVIF 胜出）：按需建输出目录
+            if out_dir is None:
+                out_dir = src.parent / (src.stem + ".squeezed")
+                out_dir.mkdir(parents=True, exist_ok=True)
             out_path = out_dir / (src.stem + best["suffix"])
             shutil.copy2(best["dst"], out_path)
 
@@ -303,12 +307,15 @@ def main():
     ok_count = skip_count = 0
 
     for f in files:
-        # 确定输出目录
-        if args.out:
+        # 确定输出目录：--in-place 直接覆盖原文件，不预建目录，避免留下空壳
+        if args.in_place:
+            out_dir = None
+        elif args.out:
             out_dir = Path(args.out)
+            out_dir.mkdir(parents=True, exist_ok=True)
         else:
             out_dir = f.parent / (f.stem + ".squeezed")
-        out_dir.mkdir(parents=True, exist_ok=True)
+            out_dir.mkdir(parents=True, exist_ok=True)
 
         if not args.verbose:
             print(f"  处理 {f.name} ...", end="\r", flush=True)
@@ -316,6 +323,10 @@ def main():
         result = compress_one(f, out_dir, args.min_ssim, args.verbose,
                               formats, in_place=args.in_place,
                               keep_original=args.keep_original)
+
+        # 兜底：若输出目录最终为空（例如全部原地覆盖），删掉它
+        if out_dir and out_dir.is_dir() and not any(out_dir.iterdir()):
+            out_dir.rmdir()
 
         if result["status"] == "ok":
             ok_count += 1
