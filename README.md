@@ -59,6 +59,13 @@ npx @vibe-x/agent-better-checkpoint --platform cursor
 | [ops-troubleshooting](skills/ops-troubleshooting/) | 用日志 + 代码还原时间线，定位故障根因 | — |
 | [ops-diagnostic](skills/ops-diagnostic/) | 证据不足时，用竞争假设和判别性埋点完成诊断 | — |
 
+### 内容创作
+
+| Skill | 说明 | npm |
+|-------|------|-----|
+| [video-cover-studio](skills/video-cover-studio/) | 视频封面：抽真帧做证据，按平台安全区排版，挂 Q 版 IP 形象 | — |
+| [xhs-intake](skills/xhs-intake/) | 解析小红书笔记（视频 / 图文）为可回溯的结构化内容 | — |
+
 ### 工具与质量
 
 | Skill | 说明 | npm |
