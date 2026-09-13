@@ -1,0 +1,39 @@
+skills/video-cover-studio/references/error-handling.md
+  s_fee96de73a2014::t_521296db0cde15 1-71
+skills/video-cover-studio/scripts/compose_ip.py
+  s_fee96de73a2014::t_7167bfb2f59afb 1-162
+skills/video-cover-studio/references/copywriting.md
+  s_fee96de73a2014::t_906778bf2d2099 1-86
+skills/video-cover-studio/scripts/compose_cover.py
+  s_fee96de73a2014::t_8a4836234a4a16 1-210
+skills/video-cover-studio/scripts/probe_video.py
+  s_fee96de73a2014::t_e7c0a58ba85666 1-95
+skills/video-cover-studio/references/cover-playbook.md
+  s_fee96de73a2014::t_1566d0028ff492 1-101
+skills/video-cover-studio/references/ip-system.md
+  s_fee96de73a2014::t_1878547959df43 1-89
+skills/video-cover-studio/assets/ip/ip-profile.json
+  s_fee96de73a2014::t_3845f567b047ad 1-53
+skills/video-cover-studio/SKILL.md
+  s_fee96de73a2014::t_4d79fcc92a3a5b 1-141
+skills/video-cover-studio/scripts/extract_frames.py
+  s_fee96de73a2014::t_e542f0cf666bd2 1-138
+README.md
+  s_fee96de73a2014::t_93d8f125900c5c 62-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "03f1a550b42519127045a0fd763c43381f3d3410",
+  "prompts": {},
+  "sessions": {
+    "s_fee96de73a2014": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_fee96de73a2014",
+        "model": "unknown"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
