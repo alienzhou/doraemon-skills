@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>脑图</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-icon" aria-hidden="true">⌘</span><div><h1 id="map-title">脑图</h1><span class="subtitle">思路画布 <span class="divider">/</span> 只读 · 内容由对话维护</span></div></div>
+  <div class="header-actions"><button id="present-start" class="primary-action" title="按主段落顺序演示">▷ 开始演示</button><button id="search-open" title="搜索节点（⌘/Ctrl K）">⌕ <span>搜索节点</span><kbd>⌘ K</kbd></button><span id="live-status" role="status" aria-live="polite" data-state="connecting">正在连接…</span></div>
+</header>
+<main id="stage" tabindex="0" aria-label="脑图画布，方向键导航，F 聚焦所选分支，Esc 回全图">
+  <div id="canvas"><svg id="edges" aria-hidden="true"></svg><div id="nodes" role="tree" aria-label="脑图节点"></div></div>
+</main>
+<div id="context-bar"><span id="selection-label">全图</span><span id="node-count"></span><button id="focus-selection" disabled title="聚焦所选分支（F / 双击）">聚焦分支 <kbd>F</kbd></button><button id="leave-focus" hidden>返回全图 <kbd>Esc</kbd></button></div>
+<section id="search-panel" aria-label="搜索节点" hidden>
+  <div class="search-input-row"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索标题或备注…" autocomplete="off" aria-label="搜索标题或备注" aria-controls="search-results"><button id="search-close" aria-label="关闭搜索">✕</button></div>
+  <div id="search-summary" role="status"></div><div id="search-results"></div>
+  <div class="search-footer">↑ ↓ 选择 <span>Enter 定位 · Esc 关闭</span></div>
+</section>
+<footer class="bottom-bar">
+  <div class="tool-group"><button id="fit" title="适配全图（Shift 1）">全图适配</button><span class="separator"></span><button id="zoom-out" aria-label="缩小" title="缩小（−）">−</button><button id="zoom-reset" title="恢复 100%（Shift 0）"><span id="zoom-value">100%</span></button><button id="zoom-in" aria-label="放大" title="放大（+）">+</button></div>
+  <div class="tool-group secondary"><button id="expand-all">全部展开</button><button id="collapse-all">收起分支</button></div>
+  <div class="tool-group mode-group"><label for="input-mode">操作</label><select id="input-mode" aria-label="输入设备模式"><option value="trackpad">触控板</option><option value="mouse">鼠标</option></select><button id="help-toggle" aria-label="操作帮助" aria-expanded="false">?</button></div>
+</footer>
+<div id="gesture-hint">双指滚动平移 · Ctrl / ⌘ + 滚轮缩放 · 拖动空白平移</div>
+<aside id="help" hidden><strong>专注阅读，自由浏览</strong><p>单击选中 · 双击或 F 聚焦分支<br>方向键：← 父节点 / → 子节点 / ↑ ↓ 相邻节点<br>Esc 取消选择并返回全图<br>⌘ / Ctrl K 搜索 · + / − 缩放<br>Shift 1 全图适配 · Shift 0 原始大小</p><p>触控板：双指滚动平移，Ctrl / ⌘ + 滚轮缩放。<br>鼠标：滚轮缩放，Shift + 滚轮水平平移。<br>拖动空白平移；圆形按钮只折叠，不移动画布。</p><small>聚焦只调整视角和高亮，不改变折叠状态。内容通过对话更新。</small></aside>
+<header id="presentation-header" hidden><div><span class="presentation-eyebrow">段落演示 · <span id="presentation-map-title"></span></span><h2 id="presentation-title"></h2></div><span id="presentation-progress" role="status" aria-live="polite"></span></header>
+<footer id="presentation-controls" aria-label="演示控制" hidden>
+  <div class="presentation-navigation"><button id="present-prev" aria-label="上一段">← 上一段</button><button id="present-play" class="primary-action" aria-pressed="false">▷ 自动预览</button><button id="present-next" aria-label="下一段">下一段 →</button></div>
+  <div class="presentation-options"><label for="present-duration">每段</label><select id="present-duration" aria-label="自动预览每段时长"><option value="8">8 秒</option><option value="15">15 秒</option><option value="30">30 秒</option></select><span id="presentation-status" role="status" aria-live="polite">已暂停 · 仅预览，非口播计时</span><button id="present-fullscreen" aria-pressed="false">全屏</button><button id="present-exit">退出 <kbd>Esc</kbd></button></div>
+  <small>空格 / → 下一段 · ← 上一段 · 自动预览到尾停止</small>
+</footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
