@@ -1,32 +1,32 @@
 {
-  "ip_name": "示例形象（请替换为你自己的 IP）",
-  "description": "视频封面专用 Q 版 IP 形象档案（仓库自带示例，可直接替换）。生成任何新表情前必须读取本档案，逐项对齐 appearance，避免形象漂移。",
+  "ip_name": "个人 Memoji IP",
+  "description": "视频封面专用 Q 版 IP 形象档案。生成任何新表情前必须读取本档案，逐项对齐 appearance，避免形象漂移。",
   "appearance": {
-    "character": "young Asian man, chibi proportions, big head",
-    "hat": "slate blue-grey knit beanie with two rounded bear ears on top",
-    "glasses": "round black-framed glasses",
-    "hair": "short dark black hair, slight fringe under the hat",
-    "clothing": "matching slate blue-grey knit sweater",
-    "palette": ["#7B85A8", "#5C6480", "#1A1A1A"]
+    "character": "young East Asian man, Apple Memoji adult proportions, youthful rounded face, not a child, not big-eyed chibi",
+    "hat": "light slate-gray / periwinkle knit beanie (#A7B3C6) with two small rounded bear ears on top, same color as the hat",
+    "glasses": "thin black oval eyeglasses, not perfectly round cartoon circles",
+    "hair": "short dark hair neatly peeking at both sides of the beanie",
+    "clothing": "matching light slate-blue crewneck sweater over a thin black shirt collar",
+    "palette": ["#A7B3C6", "#8E9AAD", "#1A1A1A"]
   },
   "render_style": "Soft glossy 3D render, Apple Memoji aesthetic, clean smooth shading, vivid and charming",
   "background_requirement": "pure solid green screen chroma key, no shadow on background, sharp clean edges for cutout",
   "framing": "upper body bust shot, facing slightly toward viewer",
   "identity_anchors": [
-    "bear-ear beanie",
-    "round black glasses",
-    "slate blue-grey palette"
+    "light slate bear-ear beanie",
+    "thin black oval glasses",
+    "light slate-blue sweater"
   ],
   "anchor_rule": "迭代形象时至少保留两个 identity_anchors，让老观众仍能认出",
   "expressions": {
     "惊叹": {
       "asset": "assets/ip/ip-amazed-greenscreen.png",
-      "prompt_fragment": "wide-eyed astonished and amazed, mouth open in a small surprised 'wow' shape, one hand raised to his cheek in a gasping gesture",
+      "prompt_fragment": "amazed and impressed, eyes slightly widened but still Memoji-adult, mouth open in a small surprised wow, one hand raised to his cheek",
       "use_case": "展示厉害的东西、技术炫技类封面"
     },
     "思考": {
-      "asset": null,
-      "prompt_fragment": "one hand on chin, slightly tilted head, thoughtful squint behind glasses",
+      "asset": "assets/ip/ip-thinking-greenscreen.png",
+      "prompt_fragment": "one hand on cheek, slightly tilted head, curious thoughtful expression, small slightly open mouth, looking slightly to the right",
       "use_case": "教程、原理分析类"
     },
     "无语": {
