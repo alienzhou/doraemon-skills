@@ -1,0 +1,51 @@
+README.md
+  s_553436e18e2aaf::t_229d526eb61f6b 48
+skills/discussion-mindmap/SKILL.md
+  s_553436e18e2aaf::t_7a47ecaa31ddcd 1-91
+skills/discussion-mindmap/assets/template/README.md
+  s_553436e18e2aaf::t_8fb5ac5c8eda9d 1-37
+skills/discussion-mindmap/assets/template/app.js
+  s_553436e18e2aaf::t_dd10a81f04469d 1-540
+skills/discussion-mindmap/assets/template/data-utils.mjs
+  s_553436e18e2aaf::t_8f562742a8d8ef 1-46
+skills/discussion-mindmap/assets/template/index.html
+  s_553436e18e2aaf::t_b726a506dd5c6e 1-40
+skills/discussion-mindmap/assets/template/server.mjs
+  s_553436e18e2aaf::t_84d00cac173086 1-85
+skills/discussion-mindmap/assets/template/styles.css
+  s_553436e18e2aaf::t_7fe70bfc9dd909 1-21
+skills/discussion-mindmap/references/data-contract.md
+  s_553436e18e2aaf::t_befb816830a84c 1-32
+skills/discussion-mindmap/references/error-handling.md
+  s_553436e18e2aaf::t_e4f8c4cb8f63f9 1-25
+skills/discussion-mindmap/references/validation.md
+  s_553436e18e2aaf::t_463ef9b3a723a6 1-56
+skills/discussion-mindmap/scripts/common.mjs
+  s_553436e18e2aaf::t_da86a212fbf584 1-18
+skills/discussion-mindmap/scripts/create-instance.mjs
+  s_553436e18e2aaf::t_093ee9eba98e2a 1-29
+skills/discussion-mindmap/scripts/inspect-instance.mjs
+  s_553436e18e2aaf::t_c236279d612433 1-10
+skills/discussion-mindmap/scripts/test-portability.mjs
+  s_553436e18e2aaf::t_dac4538929f7f5 1-111
+skills/discussion-mindmap/scripts/test.mjs
+  s_553436e18e2aaf::t_04a61d3a35eff3 1-156
+skills/discussion-mindmap/scripts/update-instance.mjs
+  s_553436e18e2aaf::t_0e69b71b4cc316 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fe0fb75211fa1cde73039808328a88a11f8c306e",
+  "prompts": {},
+  "sessions": {
+    "s_553436e18e2aaf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_553436e18e2aaf",
+        "model": "unknown"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
