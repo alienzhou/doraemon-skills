@@ -45,6 +45,7 @@ npx @vibe-x/agent-better-checkpoint --platform cursor
 | Skill | 说明 | npm |
 |-------|------|-----|
 | [discuss-for-specs](skills/discuss-for-specs/) | 结构化讨论，把模糊想法收敛成可执行规格 | [`@vibe-x/discuss-for-specs`](https://www.npmjs.com/package/@vibe-x/discuss-for-specs) |
+| [discussion-mindmap](skills/discussion-mindmap/) | 边讨论边更新的 Xmind 风格 HTML 脑图，支持聚焦、演示与实时同步（Node.js 22+） | — |
 | [thinking-partner](skills/thinking-partner/) | 思考伙伴：追问、挑战假设、跨领域类比，专注讨论不写代码 | — |
 | [product-thinking-coach](skills/product-thinking-coach/) | 用状态迁移把产品思考逼充分，再产出 PRD / 方案 | — |
 | [learn-with-me](skills/learn-with-me/) | 陪练式学习：第一性原理 + 小练习，用户先答、AI 再反馈 | — |
