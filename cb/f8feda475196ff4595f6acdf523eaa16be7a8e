@@ -1,0 +1,35 @@
+skills/video-cover-studio/references/ip-system.md
+  s_085054d715ab7b::t_a4a73ccf22d3ec 36
+  s_085054d715ab7b::t_cf42d71f13d9d3 23
+skills/video-cover-studio/assets/ip/ip-profile.json
+  s_085054d715ab7b::t_b4345722863c75 2-3,5-10,16-18,24,28-29
+skills/video-cover-studio/SKILL.md
+  s_085054d715ab7b::t_f88edb5b5fbb66 97
+  s_11cbb58a8c1989::t_e8f8a70e655ffd 3,70-78,118,122-127,131-132
+skills/video-cover-studio/references/cover-playbook.md
+  s_11cbb58a8c1989::t_76c2972b2ef702 34,36,38-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cbf8feda475196ff4595f6acdf523eaa16be7a8e",
+  "prompts": {},
+  "sessions": {
+    "s_085054d715ab7b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ed5e9613-03bb-46a7-ab3b-a571ecf446c0",
+        "model": "grok-4.6"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    },
+    "s_11cbb58a8c1989": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_11cbb58a8c1989",
+        "model": "unknown"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
