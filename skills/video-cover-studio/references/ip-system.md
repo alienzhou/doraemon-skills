@@ -20,7 +20,7 @@
 
 固定形象参数存放在 `assets/ip/ip-profile.json`。**每次生成新表情都必须读取它**，否则形象会漂移，失去辨识度意义。
 
-> 仓库里自带的是一套**示例形象**（戴熊耳针织帽 + 圆框眼镜的 Q 版角色），仅用于跑通流程。建立你自己的形象后，覆盖 `ip-profile.json` 与 `assets/ip/` 下的立绘即可。
+> 当前固定形象：浅灰蓝熊耳针织帽 + 细黑框眼镜的 Apple Memoji 成人比例角色。生成新表情时必须对齐 `ip-profile.json` 的 appearance，不要漂回深蓝帽子或幼态大眼。
 
 档案记录：性别年龄、发型、配饰（帽子、眼镜）、服装、配色、渲染风格。
 
@@ -33,7 +33,7 @@
 用任意 AI 生图能力（文生图），prompt 骨架：
 
 ```
-3D Memoji-style cartoon avatar character, chibi proportions, big head.
+3D Memoji-style cartoon avatar character, Apple Memoji adult proportions, not a child.
 {读取 ip-profile.json 的 appearance 字段，逐项描述}
 Expression: {目标表情的具体描述，包括眼睛、嘴形、手势}
 Upper body bust shot, facing slightly toward viewer.
