@@ -64,6 +64,7 @@ npx @vibe-x/agent-better-checkpoint --platform cursor
 
 | Skill | 说明 | npm |
 |-------|------|-----|
+| [xhs-news-studio](skills/xhs-news-studio/) | 报告/话题 → 小红书资讯图文：编辑流程、参考案例、自由设计与可运行制图骨架 | — |
 | [video-cover-studio](skills/video-cover-studio/) | 视频封面：抽真帧做证据，按平台安全区排版，挂 Q 版 IP 形象 | — |
 | [xhs-intake](skills/xhs-intake/) | 解析小红书笔记（视频 / 图文）为可回溯的结构化内容 | — |
 
