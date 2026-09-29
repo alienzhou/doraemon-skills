@@ -1,0 +1,153 @@
+{
+  "draft": true,
+  "date": "2026-01-01",
+  "theme": "editorial",
+  "brand": "资讯快讯",
+  "topic": "虚构样例：示例模型",
+  "cover": {
+    "badge": "新模型上线",
+    "title": "示例模型",
+    "hook": "开发任务表现如何？",
+    "hookIsQuestion": true,
+    "answerPage": 3,
+    "hero": "",
+    "heroAlt": "",
+    "assetNote": "排版演示 · 所有内容均为虚构",
+    "bottom": "效果评测 · 社区案例 · 使用信息"
+  },
+  "caption": {
+    "title": "示例模型的排版演示",
+    "paragraphs": [
+      "这是一份虚构样例，用于检查布局，不可当作新闻发布。",
+      "请替换为报告中的上线信息、效果数据、社区结果和结论。"
+    ],
+    "tags": [
+      "排版示例"
+    ]
+  },
+  "sources": [
+    {
+      "id": "D1",
+      "type": "synthetic",
+      "title": "虚构资料，仅供排版",
+      "url": "demo-source.md",
+      "published": "2026-01-01",
+      "checked": "2026-01-01",
+      "note": "所有数字、机构和用户都是布局示例，没有现实新闻含义。"
+    }
+  ],
+  "pages": [
+    {
+      "kind": "facts",
+      "section": "01 / 新消息",
+      "title": "示例模型\n上线体验",
+      "summary": "用一句话说明这条新闻的新变化。",
+      "sourceIds": [
+        "D1"
+      ],
+      "items": [
+        {
+          "label": "何时上线",
+          "body": "示例日期，用真实公告日期替换。"
+        },
+        {
+          "label": "什么产品",
+          "body": "面向开发任务的虚构产品。"
+        },
+        {
+          "label": "如何使用",
+          "body": "说明接入方式与使用条件。"
+        }
+      ]
+    },
+    {
+      "kind": "metrics",
+      "section": "02 / 效果表现",
+      "title": "开发任务\n通过率示例",
+      "summary": "示例数据中，加入资料后通过率提高。",
+      "sourceIds": [
+        "D1"
+      ],
+      "scores": [
+        {
+          "label": "基础设置",
+          "value": "8 / 10",
+          "passed": 8,
+          "total": 10
+        },
+        {
+          "label": "加入资料",
+          "value": "9 / 10",
+          "passed": 9,
+          "total": 10
+        }
+      ],
+      "chart": {
+        "title": "同组任务通过率",
+        "unit": "%",
+        "direction": "higher",
+        "max": 100,
+        "rows": [
+          {
+            "label": "示例模型",
+            "detail": "虚构配置 A",
+            "value": 80,
+            "highlight": true
+          },
+          {
+            "label": "参考模型",
+            "detail": "虚构配置 A",
+            "value": 70
+          }
+        ]
+      },
+      "method": "数据为虚构排版示例。真实制作时写明测试方法、样本数与设置。"
+    },
+    {
+      "kind": "community",
+      "section": "03 / 用户反馈",
+      "title": "先看具体结果\n再看使用体验",
+      "summary": "以下案例均为虚构，只演示摘要格式。",
+      "sourceIds": [
+        "D1"
+      ],
+      "cases": [
+        {
+          "task": "页面开发",
+          "result": "写清哪些交互可用，以及哪里需要修改。",
+          "author": "示例测试者甲",
+          "sourceId": "D1"
+        },
+        {
+          "task": "数据调试",
+          "result": "写清问题是否找到、修复是否验证。",
+          "author": "示例测试者乙",
+          "sourceId": "D1"
+        }
+      ],
+      "early": {
+        "title": "早期体验",
+        "body": "有来源时再写等待、报错或中断情况。"
+      }
+    },
+    {
+      "kind": "takeaway",
+      "section": "04 / 收尾",
+      "title": "现在知道什么？",
+      "summary": "按资料回答读者最关心的剩余问题。",
+      "sourceIds": [
+        "D1"
+      ],
+      "items": [
+        {
+          "label": "已确认",
+          "body": "这里填写有明确来源的结论。"
+        },
+        {
+          "label": "尚待确认",
+          "body": "这里填写真正未知、且影响理解的信息。"
+        }
+      ]
+    }
+  ]
+}

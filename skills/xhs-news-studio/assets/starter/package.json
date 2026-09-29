@@ -1,0 +1,11 @@
+{
+  "name": "cg-news-carousel",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "node build.cjs",
+    "render": "node render.cjs",
+    "package": "python3 package.py"
+  },
+  "devDependencies": { "puppeteer-core": "24.40.0" }
+}

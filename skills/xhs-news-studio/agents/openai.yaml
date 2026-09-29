@@ -1,0 +1,4 @@
+interface:
+  display_name: "资讯图文工作室"
+  short_description: "把研究报告和话题做成简洁、有来源、有视觉重点的小红书资讯图文"
+  default_prompt: "使用 $xhs-news-studio，把这份报告制作成一组小红书快讯图文和发布文案。"

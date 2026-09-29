@@ -1,0 +1,202 @@
+{
+  "draft": false,
+  "date": "2026-09-29",
+  "theme": "editorial",
+  "brand": "AI 快讯",
+  "topic": "Pixel Canary · 历史案例复现",
+  "cover": {
+    "badge": "新模型上线",
+    "title": "Pixel Canary",
+    "hook": "超过 GPT-6？",
+    "hookIsQuestion": true,
+    "answerPage": 3,
+    "hero": "assets/canary-hero.png",
+    "heroAlt": "黄色像素金丝雀概念插画",
+    "assetNote": "AI 概念插画 · 非官方标识",
+    "bottom": "前端编码 · 社区实测 · 身份线索",
+    "tone": "dark"
+  },
+  "caption": {
+    "title": "Pixel Canary 历史稿件",
+    "paragraphs": [
+      "这是 2026-09-29 案例的骨架复现，用于验证流程；新稿必须重新核对资料。",
+      "当时 Next.js 评测的基础通过率与 GPT-6 Astra 持平。"
+    ],
+    "tags": [
+      "AI资讯"
+    ]
+  },
+  "sources": [
+    {
+      "id": "1",
+      "type": "official",
+      "title": "Vercel 发布公告",
+      "url": "https://vercel.com/changelog/pixel-canary-is-now-available-in-stealth-for-free-on-ai-gateway",
+      "published": "2026-09-25",
+      "checked": "2026-09-29",
+      "note": "接入、开发方向、28/31 和 30/31。历史快照，不代表当前状态。"
+    },
+    {
+      "id": "2",
+      "type": "eval",
+      "title": "Next.js Agent Evals",
+      "url": "https://nextjs.org/evals",
+      "checked": "2026-09-29",
+      "note": "Last run 2026-09-25；pass@4，基础与加文档配置；不同 Agent。"
+    },
+    {
+      "id": "6",
+      "type": "personal",
+      "title": "Fahd Mirza 原视频",
+      "url": "https://www.youtube.com/watch?v=Y0zrQA86uYg",
+      "published": "2026-09-27",
+      "checked": "2026-09-29",
+      "note": "0:50–5:09 西装；5:12–7:04 SQL，原字幕已在历史制作中核对。"
+    },
+    {
+      "id": "7",
+      "type": "personal",
+      "title": "Reddit Three.js 鹈鹕测试",
+      "url": "https://www.reddit.com/r/PiCodingAgent/comments/1wrot0c/same_prompt_same_pipeline_adaptorch_pi_based_omk/",
+      "checked": "2026-09-29",
+      "note": "作者个人测试，造型松散；不宣称标准化同条件测试。"
+    }
+  ],
+  "pages": [
+    {
+      "kind": "facts",
+      "section": "01 / 上线信息",
+      "title": "一个匿名发布的\n编码模型",
+      "summary": "2026 年 9 月 25 日上线 Vercel AI Gateway。",
+      "sourceIds": [
+        "1"
+      ],
+      "items": [
+        {
+          "label": "开发方向",
+          "body": "网页开发、代码重构与移动应用界面。"
+        },
+        {
+          "label": "发布状态",
+          "body": "预览期内限时免费，开发方未公开。"
+        },
+        {
+          "label": "试用须知",
+          "body": "提示词和回复可能用于训练。"
+        }
+      ]
+    },
+    {
+      "kind": "metrics",
+      "section": "02 / 评测表现",
+      "title": "Next.js 任务\n通过率 90.3%",
+      "summary": "这组评测中，与 GPT-6 Astra 的通过率持平。",
+      "sourceIds": [
+        "1",
+        "2"
+      ],
+      "scores": [
+        {
+          "label": "基础设置",
+          "value": "28 / 31",
+          "passed": 28,
+          "total": 31
+        },
+        {
+          "label": "加入文档",
+          "value": "30 / 31",
+          "passed": 30,
+          "total": 31
+        }
+      ],
+      "chart": {
+        "title": "基础通过率对比",
+        "direction": "higher",
+        "unit": "%",
+        "max": 100,
+        "rows": [
+          {
+            "label": "Claude Opus 5.5",
+            "detail": "高推理 · Claude Code",
+            "value": 97
+          },
+          {
+            "label": "Pixel Canary",
+            "detail": "OpenCode",
+            "value": 90,
+            "highlight": true
+          },
+          {
+            "label": "GPT-6 Astra",
+            "detail": "高推理 · Codex",
+            "value": 90
+          },
+          {
+            "label": "Kimi K3",
+            "detail": "OpenCode",
+            "value": 84
+          },
+          {
+            "label": "GLM 5.2",
+            "detail": "OpenCode",
+            "value": 81
+          }
+        ]
+      },
+      "method": "31 项任务，pass@4：最多尝试 4 次，成功一次即通过。\n图表为榜单取整值；各模型搭配的工具不同。"
+    },
+    {
+      "kind": "community",
+      "section": "02 / 社区实测",
+      "title": "SQL 修复获好评\n3D 效果有短板",
+      "summary": "公开视频与帖子中的具体结果。",
+      "sourceIds": [
+        "6",
+        "7"
+      ],
+      "cases": [
+        {
+          "task": "SQL 调试",
+          "result": "找出关联条件遗漏，并按要求局部修复。",
+          "author": "Fahd Mirza · YouTube",
+          "sourceId": "6"
+        },
+        {
+          "task": "3D 西装定制页面",
+          "result": "换色、缩放、旋转可用；材质和纽扣欠佳。",
+          "author": "Fahd Mirza · YouTube",
+          "sourceId": "6"
+        },
+        {
+          "task": "3D 鹈鹕场景",
+          "result": "作者称代码检查通过，但造型和空间关系较差。",
+          "author": "u/Fabulous-Lobster9456 · Reddit",
+          "sourceId": "7"
+        }
+      ],
+      "early": {
+        "title": "耗时体验",
+        "body": "西装测试者在视频中记录总耗时约 1 小时 4 分钟。"
+      }
+    },
+    {
+      "kind": "takeaway",
+      "section": "03 / 收尾",
+      "title": "开发方\n当时尚未公开",
+      "summary": "这是一份历史快照，后续制作需重新核对。",
+      "sourceIds": [
+        "1"
+      ],
+      "items": [
+        {
+          "label": "明确的发布信息",
+          "body": "Vercel 是模型接入平台。"
+        },
+        {
+          "label": "尚未披露",
+          "body": "不能据接入平台推断模型由谁开发。"
+        }
+      ]
+    }
+  ]
+}
