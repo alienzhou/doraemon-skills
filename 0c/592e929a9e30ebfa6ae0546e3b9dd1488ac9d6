@@ -1,0 +1,79 @@
+README.md
+  s_8df0426d803f0e::t_a0c5ad6c4fe531 67
+skills/xhs-news-studio/SKILL.md
+  s_8df0426d803f0e::t_7d86c2a7fd1b68 1-75
+skills/xhs-news-studio/agents/openai.yaml
+  s_8df0426d803f0e::t_ec445aa2ace727 1-4
+skills/xhs-news-studio/assets/cases/pixel-canary/source/build.cjs
+  s_8df0426d803f0e::t_22f7700bb99324 1-20
+skills/xhs-news-studio/assets/cases/pixel-canary/source/image-prompt-cutout.txt
+  s_8df0426d803f0e::t_d15a69afe538a4 1
+skills/xhs-news-studio/assets/cases/pixel-canary/source/image-prompt.txt
+  s_8df0426d803f0e::t_53ed3b3350bc19 1-5
+skills/xhs-news-studio/assets/cases/pixel-canary/source/package-lock.json
+  s_8df0426d803f0e::t_652184105845d6 1-1005
+skills/xhs-news-studio/assets/cases/pixel-canary/source/package.json
+  s_8df0426d803f0e::t_4af4c1f76e6762 1-13
+skills/xhs-news-studio/assets/cases/pixel-canary/source/post-copy.md
+  s_8df0426d803f0e::t_9325052a4c117f 1-33
+skills/xhs-news-studio/assets/cases/pixel-canary/source/render.cjs
+  s_8df0426d803f0e::t_7619198c212a1d 1-35
+skills/xhs-news-studio/assets/cases/pixel-canary/source/sources.md
+  s_8df0426d803f0e::t_66412e8f8845bf 1-92
+skills/xhs-news-studio/assets/cases/pixel-canary/source/style.css
+  s_8df0426d803f0e::t_592780bb0fbc10 1-47
+skills/xhs-news-studio/assets/cases/pixel-canary/source/verify.cjs
+  s_8df0426d803f0e::t_d78aec4b46e1a7 1-55
+skills/xhs-news-studio/assets/cases/pixel-canary/starter-example.json
+  s_8df0426d803f0e::t_fdaea62fe78e56 1-202
+skills/xhs-news-studio/assets/starter/.gitignore
+  s_8df0426d803f0e::t_49236029583cc4 1-3
+skills/xhs-news-studio/assets/starter/README.md
+  s_8df0426d803f0e::t_fdc2882d88faa5 1-20
+skills/xhs-news-studio/assets/starter/build.cjs
+  s_8df0426d803f0e::t_1339212021e11d 1-49
+skills/xhs-news-studio/assets/starter/demo-source.md
+  s_8df0426d803f0e::t_bcfd29a383242e 1-3
+skills/xhs-news-studio/assets/starter/package-lock.json
+  s_8df0426d803f0e::t_7ddd7e3f3b3b64 1-1005
+skills/xhs-news-studio/assets/starter/package.json
+  s_8df0426d803f0e::t_2b7daa84d5c675 1-11
+skills/xhs-news-studio/assets/starter/package.py
+  s_8df0426d803f0e::t_938e9ebacad62b 1-26
+skills/xhs-news-studio/assets/starter/render.cjs
+  s_8df0426d803f0e::t_46fe5ae1916b89 1-64
+skills/xhs-news-studio/assets/starter/story.json
+  s_8df0426d803f0e::t_8314edb817298c 1-153
+skills/xhs-news-studio/assets/starter/style.css
+  s_8df0426d803f0e::t_a11ea4bae7eb84 1-6
+skills/xhs-news-studio/references/design.md
+  s_8df0426d803f0e::t_9b8846c6229e12 1-59
+skills/xhs-news-studio/references/editorial.md
+  s_8df0426d803f0e::t_b08f7dd782f08e 1-78
+skills/xhs-news-studio/references/pixel-canary.md
+  s_8df0426d803f0e::t_05d47a1c5ad259 1-36
+skills/xhs-news-studio/references/production.md
+  s_8df0426d803f0e::t_619eae516481ab 1-81
+skills/xhs-news-studio/references/quality.md
+  s_8df0426d803f0e::t_acf66989997706 1-48
+skills/xhs-news-studio/references/validation.md
+  s_8df0426d803f0e::t_76689875550894 1-38
+skills/xhs-news-studio/scripts/scaffold.py
+  s_8df0426d803f0e::t_73eb057ae95dab 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0c592e929a9e30ebfa6ae0546e3b9dd1488ac9d6",
+  "prompts": {},
+  "sessions": {
+    "s_8df0426d803f0e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0eaf0-1fca-7a82-8a7c-6cc3d5d8868b",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
