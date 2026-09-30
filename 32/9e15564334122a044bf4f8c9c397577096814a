@@ -1,0 +1,29 @@
+README.md
+  s_d76b29e12f14e2::t_e56561fd797405 51
+skills/competitor-intake/references/case-cursor-skill-as-mode.md
+  s_d76b29e12f14e2::t_0877d331c1b1b5 1-60
+skills/competitor-intake/references/task-fields.md
+  s_d76b29e12f14e2::t_9fea6fd4092dad 1-111
+skills/competitor-intake/SKILL.md
+  s_d76b29e12f14e2::t_d4e0a1818eacb5 1-182
+skills/competitor-intake/references/doc-template.md
+  s_d76b29e12f14e2::t_cf2efcf156866e 1-120
+skills/competitor-intake/references/capture-pitfalls.md
+  s_d76b29e12f14e2::t_2e78bfa0bbaecb 1-339
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "329e15564334122a044bf4f8c9c397577096814a",
+  "prompts": {},
+  "sessions": {
+    "s_d76b29e12f14e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_d76b29e12f14e2",
+        "model": "unknown"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
