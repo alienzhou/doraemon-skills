@@ -1,0 +1,33 @@
+skills/xhs-news-studio/assets/cases/devday-visual-18/coverage.md
+  s_83f3db5220a15f::t_c01a26ae5c8b5c 1-133
+skills/xhs-news-studio/assets/starter/README.md
+  s_83f3db5220a15f::t_1b451e797f8cec 5-6
+skills/xhs-news-studio/assets/starter/build.cjs
+  s_83f3db5220a15f::t_df0b9b799b9ae5 11-13,16-17
+skills/xhs-news-studio/assets/starter/package.py
+  s_83f3db5220a15f::t_186240832db7a7 11-13,22
+skills/xhs-news-studio/assets/starter/render.cjs
+  s_83f3db5220a15f::t_5f25cc1f9f1fb3 6-8,62
+skills/xhs-news-studio/assets/starter/story.json
+  s_83f3db5220a15f::t_25e5d4dea24966 3-4,155
+skills/xhs-news-studio/references/validation.md
+  s_83f3db5220a15f::t_68576570611781 3-18
+skills/xhs-news-studio/scripts/scaffold.py
+  s_83f3db5220a15f::t_4b5155c0f5ebac 4,9,11,16-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a0bfa4dd1db263a9b1f3101456ff5f0362f1a1ef",
+  "prompts": {},
+  "sessions": {
+    "s_83f3db5220a15f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f0aa-ef40-7191-86a2-206c8dc1d141",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
