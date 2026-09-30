@@ -1,5 +1,7 @@
 {
   "draft": true,
+  "maxImages": 18,
+  "renderInputs": [],
   "date": "2026-01-01",
   "theme": "editorial",
   "brand": "资讯快讯",

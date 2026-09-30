@@ -3,6 +3,9 @@ const puppeteer=require('puppeteer-core');
 const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 (async()=>{
  const names=JSON.parse(fs.readFileSync('pages.json','utf8'));
+ const story=JSON.parse(fs.readFileSync('story.json','utf8'));
+ const extraInputs=story.renderInputs||[];
+ if(!Array.isArray(extraInputs)||extraInputs.some(p=>typeof p!=='string'||path.isAbsolute(p)||p.split(/[\\/]/).includes('..')||/^\w+:/.test(p)))throw Error('renderInputs must stay inside project');
  const candidates=[process.env.CHROME_PATH,'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome','/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chromium-browser',process.env.PROGRAMFILES&&path.join(process.env.PROGRAMFILES,'Google/Chrome/Application/chrome.exe')].filter(Boolean);
  const executablePath=candidates.find(p=>fs.existsSync(p));
  if(!executablePath)throw Error('Chrome/Chromium not found. Set CHROME_PATH to its executable.');
@@ -56,7 +59,7 @@ const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'
   await page.setContent(`<body style="margin:0;padding:24px;background:#ddd;font-family:sans-serif"><h2>240px 缩略图检查</h2><div style="display:flex;gap:20px;flex-wrap:wrap">${names.map(n=>`<img width="240" height="320" src="${pathToFileURL(path.resolve('output/'+n.replace('.html','.png')))}">`).join('')}</div></body>`);
   await page.evaluate(async()=>{await Promise.all(Array.from(document.images).map(i=>i.decode()))});await page.screenshot({path:'output/thumbnails.png',fullPage:true});
  }finally{await browser.close()}
- const inputFiles=['story.json','pages.json','build.cjs','render.cjs','package.py','style.css','index.html','post-copy.md','sources.md',...names,...assets];
+ const inputFiles=[...new Set(['story.json','pages.json','build.cjs','render.cjs','package.py','style.css','index.html','post-copy.md','sources.md',...names,...assets,...extraInputs])];
  const outputs=names.map(n=>'output/'+n.replace('.html','.png')).concat(['output/overview.png','output/thumbnails.png']);
  const qa={ok:results.every(r=>!r.errors.length),results,inputHashes:Object.fromEntries(inputFiles.map(p=>[p,sha(p)])),outputHashes:Object.fromEntries(outputs.map(p=>[p,sha(p)]))};
  fs.writeFileSync('output/qa.json',JSON.stringify(qa,null,2));

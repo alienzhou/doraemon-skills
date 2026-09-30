@@ -8,8 +8,13 @@ requireThat(/^\d{4}-\d{2}-\d{2}$/.test(s.date),'date must be YYYY-MM-DD');
 requireThat(['editorial','light','night'].includes(s.theme),'Unknown theme; extend CSS and validator together');
 requireThat(s.cover?.title&&s.cover?.badge&&s.cover?.hook,'Cover needs topic, news and hook');
 requireThat(s.pages?.length>0&&s.sources?.length>0,'Need pages and sources');
+const maxImages=s.maxImages??18;
+requireThat(Number.isInteger(maxImages)&&maxImages>=1,'maxImages must be a positive integer');
+requireThat(s.pages.length+1<=maxImages,`Image budget exceeded: ${s.pages.length+1} including cover > ${maxImages}`);
 const ids=new Set(s.sources.map(x=>x.id));requireThat(ids.size===s.sources.length,'Duplicate source IDs');
 function safeLocal(x){requireThat(typeof x==='string'&&!path.isAbsolute(x)&&!x.split(/[\\/]/).includes('..')&&!/^\w+:/.test(x),'Asset path must stay inside project');return x}
+requireThat(s.renderInputs===undefined||Array.isArray(s.renderInputs),'renderInputs must be an array of local dependency files');
+for(const input of s.renderInputs||[]){safeLocal(input);requireThat(fs.existsSync(input)&&fs.statSync(input).isFile(),'Missing render input: '+input)}
 if(s.cover.hero){safeLocal(s.cover.hero);requireThat(fs.existsSync(s.cover.hero),'Missing hero');requireThat(s.cover.heroAlt&&s.cover.assetNote,'Hero needs alt text and asset provenance note');requireThat(['dark','light'].includes(s.cover.tone),'Hero needs explicit dark/light text treatment')}
 const names=['01-cover.html'];
 s.pages.forEach((p,i)=>{
