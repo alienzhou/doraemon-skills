@@ -1,0 +1,41 @@
+README.md
+  s_6e3b326a59f109::t_f826fc69473c5b 53
+skills/learn-lab/SKILL.md
+  s_6e3b326a59f109::t_8367f26356d2c3 1-299
+skills/learn-lab/assets/cases/gpu-inference-lab/README.md
+  s_6e3b326a59f109::t_b6c2a3eb0177d4 1-172
+skills/learn-lab/assets/cases/gpu-inference-lab/index.html
+  s_6e3b326a59f109::t_caf3e49af8ba7f 1-2545
+skills/learn-lab/references/architecture.md
+  s_6e3b326a59f109::t_519e5aed34cb58 1-223
+skills/learn-lab/references/case-gpu-lab.md
+  s_6e3b326a59f109::t_f21bcf88521a45 1-121
+skills/learn-lab/references/data-sourcing.md
+  s_6e3b326a59f109::t_09e1873db27b1e 1-135
+skills/learn-lab/references/instruments.md
+  s_6e3b326a59f109::t_da86d416ef7078 1-147
+skills/learn-lab/references/iteration.md
+  s_6e3b326a59f109::t_dcc5275b491fdc 1-153
+skills/learn-lab/references/validation.md
+  s_6e3b326a59f109::t_d5d0026b8fb618 1-141
+skills/learn-lab/scripts/pedagogy-check.js
+  s_6e3b326a59f109::t_e97fc179f2afc6 1-463
+skills/learn-lab/scripts/serve.py
+  s_6e3b326a59f109::t_b2d3ef78f567f8 1-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6bac4176b98cb5eebb767ab7ffbfe50a4eaf7480",
+  "prompts": {},
+  "sessions": {
+    "s_6e3b326a59f109": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_6e3b326a59f109",
+        "model": "unknown"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
