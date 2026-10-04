@@ -29,9 +29,21 @@
 
 ## 流程
 
+### 0. 先过语法检查（改了页面脚本就必须做）
+
+一个括号不配对会让整个 `<script>` 块静默失效：页面照常渲染，交互全死，
+截图完全看不出来。所以先用 node 验一遍，再谈浏览器：
+
+```sh
+python3 -c "import re;s=open('index.html',encoding='utf-8').read();open('/tmp/_c.js','w').write(re.findall(r'<script>(.*?)</script>',s,re.S)[0])"
+node --check /tmp/_c.js
+```
+
 ### 1. 起服务
 
-`file://` 会被浏览器工具拒绝，必须走 http。
+**这一步是浏览器工具的变通，不是课件的使用方式。** 工具通常拒绝 `file://`，
+所以验收期间走 http；**课件本身必须 `file://` 双击可用**，
+这个服务不能出现在交付说明里，验收完就停掉（见「清理」）。
 
 ```sh
 python3 "<skill-dir>/scripts/serve.py" "/absolute/path/output-dir"
@@ -72,6 +84,24 @@ myflicker-browser evaluate --tab-id <tabId> \
 q('[data-preset="cloud"]').click();
 ```
 
+### 5. `file://` 终验（用户的真实路径）
+
+http 下正常不代表 `file://` 下正常 —— 受限 API（`localStorage`、
+`fetch` 本地文件）只在这里暴露。所以最后必须按用户的方式打开一遍：
+
+```sh
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless=new --disable-gpu --virtual-time-budget=5000 \
+  --dump-dom "file:///absolute/path/index.html" \
+  | grep -o 'data-target=' | wc -l   # 目录链接数，0 说明脚本没跑起来
+```
+
+注意用 `grep -o | wc -l`（数出现次数），不是 `grep -c`（数匹配行数）——
+目录是 JS 动态生成的，整段 DOM 常被 dump 成一行，`-c` 会得到 1 或 2 这种误导值。
+
+确认：页面渲染、页内目录生成、教具可操作、无控制台报错。
+通过之后**停掉验收服务**（见「清理」），交付说明里不要出现它。
+
 ## 人工检查清单
 
 脚本查不到的，逐项人看：
@@ -82,8 +112,7 @@ q('[data-preset="cloud"]').click();
 - [ ] 每个折叠：只读摘要能答出标题的问题吗
 - [ ] 每个教具：拖动后我知道「所以呢」吗
 - [ ] 答疑分类名像读者心理状态，不像教材目录
-- [ ] 答疑问题用读者原话（源于真实对话的直接用当时问法）
-- [ ] 至少有一条「我该怎么做」类问题
+- [ ] 答疑问题用读者原话（源于真实对话的直接用当时问法）- [ ] 至少有一条「我该怎么做」类问题
 - [ ] 模块之间有因果链，不是互相孤立
 
 ### 数据
@@ -110,6 +139,15 @@ q('[data-preset="cloud"]').click();
 - [ ] 窄屏可读，无文本裁切
 - [ ] 固定元素不遮挡页尾
 - [ ] 颜色编码全页一致（同一语义同一颜色）
+
+### 交付形态
+
+- [ ] `file://` 双击打开，功能完整（不需要起任何服务）
+- [ ] 有页内目录：常驻入口、能筛选、点一条即跳转并展开
+- [ ] 零外部资源引用（`grep -o 'src="http\|href="http\|@import' index.html | wc -l` 为 0）
+- [ ] 用到剪贴板等受限 API 的地方有降级兜底
+- [ ] 回复里给的是「打开文件 + 点目录」，**不是** `#hash` 深链
+- [ ] 验收用的本地服务已停掉
 
 ## README 的验证记录
 
