@@ -1,0 +1,23 @@
+skills/learn-lab/SKILL.md
+  s_aa0ad8684df88a::t_37564dc06c2d0c 6-7,38-58,208-219,273-275,294-297,302,306-308,331-333
+skills/learn-lab/references/iteration.md
+  s_aa0ad8684df88a::t_b37f2f1fd608ab 40-48,144,146,149-153
+skills/learn-lab/references/validation.md
+  s_aa0ad8684df88a::t_2c7e1c52a69116 32-41,44-46,87-104,115,143-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f8e8f615b321e8ad7bad3bb9b4b6e5e869eb137e",
+  "prompts": {},
+  "sessions": {
+    "s_aa0ad8684df88a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_aa0ad8684df88a",
+        "model": "unknown"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
