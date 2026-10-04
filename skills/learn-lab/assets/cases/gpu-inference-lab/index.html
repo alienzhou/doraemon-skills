@@ -1,0 +1,2545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPU 推理实验室 · 显存、带宽与投机解码</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:oklch(15% 0.022 255);--bg-raised:oklch(19% 0.025 255);--bg-panel:oklch(21% 0.028 253);
+  --bg-inset:oklch(12% 0.018 255);--ink:oklch(94% 0.008 250);--ink-dim:oklch(72% 0.022 245);
+  --ink-faint:oklch(54% 0.025 245);--line:oklch(31% 0.03 250);--line-soft:oklch(25% 0.025 252);
+  --cyan:oklch(81% 0.13 205);--lime:oklch(86% 0.17 132);--amber:oklch(82% 0.15 72);
+  --red:oklch(68% 0.19 22);--violet:oklch(74% 0.14 295);
+  --f-dsp:"Space Grotesk","Noto Sans SC",sans-serif;--f-body:"Noto Sans SC",ui-sans-serif,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px;scroll-behavior:smooth}
+body{background:var(--bg);
+  background-image:linear-gradient(oklch(100% 0 0/0.016) 1px,transparent 1px),
+    linear-gradient(90deg,oklch(100% 0 0/0.016) 1px,transparent 1px),
+    radial-gradient(ellipse 90% 55% at 78% -8%,oklch(28% 0.06 230/0.55),transparent);
+  background-size:34px 34px,34px 34px,100% 100%;
+  color:var(--ink);font-family:var(--f-body);line-height:1.72;
+  display:grid;grid-template-columns:238px minmax(0,1fr);min-height:100vh}
+::selection{background:oklch(81% 0.13 205/0.26)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;border:2px solid var(--bg)}
+#nav{border-right:1px solid var(--line);padding:26px 14px;position:sticky;top:0;height:100vh;
+  overflow-y:auto;display:flex;flex-direction:column;gap:22px;
+  background:oklch(14% 0.022 255/0.72);backdrop-filter:blur(8px)}
+.brand{display:flex;gap:11px;align-items:center;padding:0 6px}
+.brand-mark{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--line);
+  border-radius:9px;background:var(--bg-raised);font-family:var(--f-mono);font-size:17px;font-weight:700;color:var(--cyan)}
+.brand-t{font-family:var(--f-dsp);font-weight:700;font-size:15px;line-height:1.25}
+.brand-s{font-family:var(--f-mono);font-size:9.5px;color:var(--ink-faint);letter-spacing:.14em;text-transform:uppercase}
+.nav-label{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--ink-faint);padding:0 8px;margin-bottom:-10px}
+.nav-list{display:flex;flex-direction:column;gap:3px}
+.nav-item{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:8px;cursor:pointer;
+  border:1px solid transparent;transition:.16s;text-decoration:none;color:inherit}
+.nav-item:hover{background:var(--bg-raised);border-color:var(--line-soft)}
+.nav-item.on{background:oklch(81% 0.13 205/0.10);border-color:oklch(81% 0.13 205/0.34)}
+.nav-n{font-family:var(--f-mono);font-size:10.5px;color:var(--cyan);font-weight:700;padding-top:3px;min-width:16px}
+.nav-tx{font-size:12.5px;font-weight:500;line-height:1.42}
+.nav-tx small{display:block;color:var(--ink-faint);font-size:10.5px;font-weight:400}
+.nav-foot{margin-top:auto;padding:12px 8px 0;border-top:1px solid var(--line-soft);
+  font-family:var(--f-mono);font-size:9.5px;color:var(--ink-faint);line-height:1.8}
+main{padding:0 0 128px;min-width:0}
+header.hero{padding:62px 44px 44px;border-bottom:1px solid var(--line)}
+.kicker{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.kicker::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent);max-width:200px}
+h1{font-family:var(--f-dsp);font-size:clamp(30px,4.4vw,46px);font-weight:700;line-height:1.1;
+  letter-spacing:-.022em;margin-bottom:18px;max-width:21ch}
+h1 em{font-style:normal;color:var(--cyan)}
+.lede{font-size:15px;color:var(--ink-dim);max-width:64ch;margin-bottom:26px}
+.spec-row{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;
+  overflow:hidden;background:var(--bg-panel);max-width:740px}
+.spec{padding:12px 18px;border-right:1px solid var(--line-soft);flex:1;min-width:132px}
+.spec:last-child{border-right:0}
+.spec-k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.spec-v{font-family:var(--f-mono);font-size:16px;font-weight:700;color:var(--lime);margin-top:2px}
+.spec-v small{font-size:10.5px;color:var(--ink-faint);font-weight:400}
+section.mod{padding:56px 44px;border-bottom:1px solid var(--line-soft)}
+.mod-head{display:flex;gap:16px;align-items:baseline;margin-bottom:10px}
+.mod-n{font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--cyan);
+  border:1px solid oklch(81% 0.13 205/.4);border-radius:5px;padding:2px 8px;flex-shrink:0}
+h2{font-family:var(--f-dsp);font-size:clamp(21px,2.6vw,28px);font-weight:700;letter-spacing:-.016em;line-height:1.24}
+.mod-sub{color:var(--ink-dim);font-size:14px;max-width:68ch;margin-bottom:28px}
+h3{font-family:var(--f-dsp);font-size:15px;font-weight:600;margin:26px 0 10px}
+p{max-width:68ch;margin-bottom:12px;font-size:14px;color:var(--ink-dim)}
+p strong{color:var(--ink);font-weight:600}
+code{font-family:var(--f-mono);font-size:.87em;background:var(--bg-inset);
+  border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px;color:var(--cyan)}
+.panel{background:var(--bg-panel);border:1px solid var(--line);border-radius:13px;padding:24px;margin:22px 0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.panel-t{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint)}
+.ctl{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.ctl-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.ctl-l{font-size:12.5px;font-weight:500}
+.ctl-v{font-family:var(--f-mono);font-size:13px;font-weight:700;color:var(--lime)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+  background:var(--line);outline:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+  background:var(--cyan);border:3px solid var(--bg-panel);box-shadow:0 0 0 1px var(--cyan)}
+input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--cyan);
+  border:3px solid var(--bg-panel);box-shadow:0 0 0 1px var(--cyan)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg-inset)}
+.seg button{background:transparent;border:0;border-right:1px solid var(--line-soft);color:var(--ink-dim);
+  font-family:var(--f-mono);font-size:11.5px;padding:7px 13px;cursor:pointer;transition:.14s;font-weight:500}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--bg-raised);color:var(--ink)}
+.seg button.on{background:var(--cyan);color:oklch(16% 0.03 250);font-weight:700}
+.btn{background:var(--bg-raised);border:1px solid var(--line);color:var(--ink);font-family:var(--f-mono);
+  font-size:11.5px;padding:8px 15px;border-radius:7px;cursor:pointer;transition:.14s;font-weight:500}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.pri{background:var(--cyan);color:oklch(16% 0.03 250);border-color:var(--cyan);font-weight:700}
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:18px}
+.read{background:var(--bg-inset);padding:13px 15px}
+.read-k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+.read-v{font-family:var(--f-mono);font-size:19px;font-weight:700;margin-top:3px;line-height:1.15}
+.read-v small{font-size:11px;font-weight:400;color:var(--ink-faint)}
+.read-n{font-size:10.5px;color:var(--ink-faint);margin-top:2px;line-height:1.4}
+.c-cy{color:var(--cyan)}.c-li{color:var(--lime)}.c-am{color:var(--amber)}.c-rd{color:var(--red)}.c-vi{color:var(--violet)}
+.hier{display:flex;flex-direction:column;gap:7px}
+.hl{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center;cursor:pointer;
+  padding:9px 11px;border-radius:9px;border:1px solid transparent;transition:.16s}
+.hl:hover{background:var(--bg-raised);border-color:var(--line-soft)}
+.hl.on{background:oklch(81% 0.13 205/.09);border-color:oklch(81% 0.13 205/.36)}
+.hl-name{font-size:12.5px;font-weight:600;line-height:1.3}
+.hl-name small{display:block;font-family:var(--f-mono);font-size:9.5px;color:var(--ink-faint);font-weight:400}
+.hl-bar-wrap{position:relative;height:30px;display:flex;align-items:center}
+.hl-bar{height:19px;border-radius:4px;transition:width .5s cubic-bezier(.2,.7,.3,1);
+  display:flex;align-items:center;padding-left:9px;min-width:64px;overflow:hidden}
+.hl-bar span{font-family:var(--f-mono);font-size:10.5px;font-weight:700;white-space:nowrap;color:oklch(14% 0.02 250)}
+.hl-meta{font-family:var(--f-mono);font-size:10px;color:var(--ink-faint);margin-left:10px;white-space:nowrap}
+.marker-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.mk{font-family:var(--f-mono);font-size:10.5px;padding:5px 11px;border-radius:6px;border:1px solid var(--line);
+  background:var(--bg-inset);cursor:pointer;transition:.14s;color:var(--ink-dim)}
+.mk:hover{border-color:var(--amber);color:var(--amber)}
+.mk.on{background:var(--amber);color:oklch(16% 0.03 250);border-color:var(--amber);font-weight:700}
+.bus-stage{display:grid;grid-template-columns:1fr 92px 1fr;align-items:stretch;
+  border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg-inset);min-height:244px}
+.bus-side{padding:15px}
+.bus-side.vram{border-right:1px solid var(--line)}
+.bus-side.sm{border-left:1px solid var(--line)}
+.bus-cap{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:11px;display:flex;justify-content:space-between;gap:8px}
+.layer-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.lcell{aspect-ratio:1;border-radius:3px;background:var(--line-soft);transition:.2s}
+.lcell.moving{background:var(--amber);box-shadow:0 0 9px oklch(82% 0.15 72/.55)}
+.lcell.done{background:oklch(81% 0.13 205/.33)}
+.bus-pipe{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;background:linear-gradient(180deg,var(--bg-panel),var(--bg-inset))}
+.pipe-track{position:relative;width:100%;height:84px;overflow:hidden;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg-inset)}
+.pkt{position:absolute;width:11px;height:5px;border-radius:2px;background:var(--amber);
+  box-shadow:0 0 7px oklch(82% 0.15 72/.6)}
+.pipe-lbl{font-family:var(--f-mono);font-size:9px;color:var(--ink-faint);text-align:center;letter-spacing:.06em}
+.sm-core-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-bottom:12px}
+.core{aspect-ratio:1;border-radius:2px;background:var(--line-soft);transition:.15s}
+.core.busy{background:var(--lime);box-shadow:0 0 6px oklch(86% 0.17 132/.5)}
+.util-row{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.util{display:flex;flex-direction:column;gap:4px}
+.util-top{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10px;color:var(--ink-faint)}
+.util-bar{height:7px;border-radius:4px;background:var(--bg-raised);overflow:hidden}
+.util-fill{height:100%;border-radius:4px;transition:width .3s}
+.tok-out{display:flex;flex-wrap:wrap;gap:5px;min-height:30px;margin-top:13px;padding:9px;
+  border:1px dashed var(--line);border-radius:8px;background:var(--bg-inset)}
+.tok{font-family:var(--f-mono);font-size:11px;padding:2px 8px;border-radius:5px;
+  background:oklch(81% 0.13 205/.16);border:1px solid oklch(81% 0.13 205/.34);color:var(--cyan);
+  animation:pop .3s cubic-bezier(.2,.9,.3,1) both}
+.tok.draft{background:oklch(74% 0.14 295/.14);border-color:oklch(74% 0.14 295/.36);color:var(--violet)}
+.tok.acc{background:oklch(86% 0.17 132/.15);border-color:oklch(86% 0.17 132/.38);color:var(--lime)}
+.tok.rej{background:oklch(68% 0.19 22/.14);border-color:oklch(68% 0.19 22/.36);color:var(--red);
+  text-decoration:line-through;opacity:.62}
+.q-split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:860px){.q-split{grid-template-columns:1fr}}
+.wgrid{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;margin-top:10px}
+.wc{aspect-ratio:1;border-radius:1.5px;transition:background .3s}
+.vram-gauge{position:relative;height:38px;border:1px solid var(--line);border-radius:8px;
+  background:var(--bg-inset);overflow:hidden;margin-top:11px}
+.vram-fill{position:absolute;inset:0 auto 0 0;transition:width .45s cubic-bezier(.2,.7,.3,1);
+  display:flex;align-items:center;padding-left:11px}
+.vram-fill span{font-family:var(--f-mono);font-size:11.5px;font-weight:700;color:oklch(14% 0.02 250);white-space:nowrap}
+.vram-over{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-mono);
+  font-size:11.5px;font-weight:700;color:var(--red)}
+.numline{display:flex;gap:3px;margin-top:9px;align-items:flex-end;height:52px}
+.nbar{flex:1;background:var(--cyan);border-radius:2px 2px 0 0;transition:.3s;min-height:2px;opacity:.82}
+.rf-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:start}
+@media(max-width:900px){.rf-wrap{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;display:block;border-radius:9px;background:var(--bg-inset);border:1px solid var(--line)}
+.verdict{border-radius:10px;padding:15px 17px;border:1px solid;margin-top:16px;transition:.3s}
+.verdict.mem{background:oklch(82% 0.15 72/.08);border-color:oklch(82% 0.15 72/.38)}
+.verdict.comp{background:oklch(68% 0.19 22/.08);border-color:oklch(68% 0.19 22/.36)}
+.verdict-t{font-family:var(--f-mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  font-weight:700;margin-bottom:7px}
+.verdict.mem .verdict-t{color:var(--amber)}
+.verdict.comp .verdict-t{color:var(--red)}
+.verdict p{font-size:13px;margin:0;color:var(--ink-dim);max-width:none}
+.spec-lanes{display:flex;flex-direction:column;gap:11px;margin-top:6px}
+.lane{border:1px solid var(--line);border-radius:10px;padding:13px 15px;background:var(--bg-inset)}
+.lane-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;gap:12px;flex-wrap:wrap}
+.lane-n{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.lane-m{font-family:var(--f-mono);font-size:12px;font-weight:700}
+.timeline{position:relative;height:26px;border-radius:5px;background:var(--bg-raised);overflow:hidden;display:flex}
+.tseg{height:100%;border-right:1px solid oklch(15% 0.02 255/.75);display:grid;place-items:center;
+  font-family:var(--f-mono);font-size:9px;font-weight:700;color:oklch(14% 0.02 250);overflow:hidden;
+  transition:width .4s cubic-bezier(.2,.7,.3,1)}
+.callout{border-left:2px solid var(--cyan);background:oklch(81% 0.13 205/.055);
+  padding:14px 18px;border-radius:0 9px 9px 0;margin:20px 0}
+.callout.warn{border-color:var(--amber);background:oklch(82% 0.15 72/.06)}
+.callout-t{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--cyan);font-weight:700;margin-bottom:6px}
+.callout.warn .callout-t{color:var(--amber)}
+.callout p{margin:0;font-size:13.5px}
+.callout p+p{margin-top:9px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line-soft)}
+th{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:500}
+td{color:var(--ink-dim)}
+td:first-child{color:var(--ink);font-weight:500}
+td.mono{font-family:var(--f-mono);font-size:12px}
+/* ===== 单位模块 ===== */
+.urow{display:grid;grid-template-columns:118px minmax(0,1fr) 126px;gap:14px;align-items:center;
+  padding:12px 14px;border:1px solid var(--line-soft);border-radius:9px;background:var(--bg-inset);
+  margin-bottom:9px;transition:.22s}
+.urow.solved{border-color:oklch(86% 0.17 132/.55);background:oklch(86% 0.17 132/.07)}
+.urow-k{font-size:12.5px;font-weight:600;line-height:1.3;display:flex;flex-wrap:wrap;
+  align-items:center;gap:0 7px}
+.urow-k small{display:block;font-family:var(--f-mono);font-size:9.5px;color:var(--ink-faint);
+  letter-spacing:.07em;text-transform:uppercase;font-weight:400;width:100%}
+.urow-v{font-family:var(--f-mono);font-size:16px;font-weight:700;text-align:right;color:var(--cyan)}
+.urow.solved .urow-v{color:var(--lime);font-size:19px}
+.urow-v small{font-size:10.5px;font-weight:400;color:var(--ink-faint);margin-left:3px}
+.urow input[type=range]{margin:0}
+.urow.solved input[type=range]{opacity:.26;pointer-events:none}
+.ueq{font-family:var(--f-mono);font-size:13px;text-align:center;padding:15px 12px;margin-top:4px;
+  border-radius:9px;background:var(--bg-raised);border:1px solid var(--line-soft);
+  color:var(--ink-dim);line-height:1.9;overflow-wrap:anywhere}
+.ueq b{color:var(--lime);font-weight:700}
+.ueq i{font-style:normal;color:var(--cyan)}
+.pfx{display:grid;grid-template-columns:52px 74px minmax(0,1fr);gap:12px;align-items:center;
+  padding:9px 13px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:.16s}
+.pfx:hover{background:var(--bg-raised)}
+.pfx.on{background:oklch(81% 0.13 205/.09);border-color:oklch(81% 0.13 205/.3)}
+.pfx-n{font-family:var(--f-mono);font-size:15px;font-weight:700;color:var(--cyan)}
+.pfx-e{font-family:var(--f-mono);font-size:11px;color:var(--ink-faint)}
+.pfx-x{font-size:12px;color:var(--ink-dim);line-height:1.45}
+.pfx.on .pfx-x{color:var(--ink)}
+/* ===== 屋顶示意 ===== */
+.roof-art{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px;align-items:center;
+  margin:20px 0}
+.roof-art svg{width:100%;height:auto;display:block}
+@media(max-width:760px){.roof-art{grid-template-columns:1fr}}
+/* ===== 来源卡 ===== */
+.gpus{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin:4px 0 2px}
+.gpu{border:1px solid var(--line-soft);border-radius:10px;padding:13px 15px;cursor:pointer;
+  background:var(--bg-inset);transition:.18s}
+.gpu:hover{border-color:var(--line)}
+.gpu.on{border-color:oklch(74% 0.14 295/.6);background:oklch(74% 0.14 295/.08)}
+.gpu-n{font-family:var(--f-dsp);font-size:13.5px;font-weight:700;line-height:1.25}
+.gpu-n small{display:block;font-family:var(--f-mono);font-size:9.5px;color:var(--ink-faint);font-weight:400;
+  letter-spacing:.08em;text-transform:uppercase}
+.gpu-r{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-dim);margin-top:8px;line-height:1.7}
+.gpu-r b{color:var(--violet);font-weight:700}
+.src-t{display:inline-block;font-family:var(--f-mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px;font-weight:700;white-space:nowrap}
+.src-t.spec{background:oklch(86% 0.17 132/.14);color:var(--lime)}
+.src-t.calc{background:oklch(81% 0.13 205/.14);color:var(--cyan)}
+.src-t.appr{background:oklch(82% 0.15 72/.14);color:var(--amber)}
+/* ===== 折叠块：收起时也给结论，展开才看推导 ===== */
+.fold{border:1px solid var(--line-soft);border-radius:11px;background:var(--bg-panel);
+  margin:14px 0;overflow:hidden;transition:border-color .2s}
+.fold:hover{border-color:var(--line)}
+.fold[open]{border-color:var(--line);background:var(--bg-panel)}
+.fold>summary{list-style:none;cursor:pointer;padding:14px 18px;display:grid;
+  grid-template-columns:20px minmax(0,1fr) auto;gap:12px;align-items:start;
+  transition:background .16s;user-select:none}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary:hover{background:var(--bg-raised)}
+.fold>summary:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+.fold-ar{grid-column:1;grid-row:1/3;width:20px;height:20px;display:grid;place-items:center;margin-top:1px;
+  font-family:var(--f-mono);font-size:11px;color:var(--cyan);border:1px solid var(--line);
+  border-radius:5px;background:var(--bg-inset);transition:.22s}
+.fold[open] .fold-ar{transform:rotate(90deg);background:oklch(81% 0.13 205/.14);
+  border-color:oklch(81% 0.13 205/.4)}
+.fold-q{grid-column:2;grid-row:1;font-size:13.5px;font-weight:600;line-height:1.45;min-width:0}
+.fold-tldr{grid-column:2;grid-row:2;font-size:12px;color:var(--ink-dim);line-height:1.6;
+  margin-top:4px;min-width:0}
+.fold-tldr b{color:var(--lime);font-weight:600}
+.fold-tag{grid-column:3;grid-row:1/3;align-self:center;font-family:var(--f-mono);font-size:9px;
+  letter-spacing:.09em;text-transform:uppercase;padding:3px 8px;border-radius:5px;white-space:nowrap;
+  background:var(--bg-inset);color:var(--ink-faint);border:1px solid var(--line-soft)}
+.fold[open] .fold-tag{opacity:.4}
+.fold-body{padding:2px 18px 18px;border-top:1px solid var(--line-soft);margin-top:-1px}
+.fold-body>*:first-child{margin-top:16px}
+.fold-body p{font-size:13.5px;max-width:none}
+.fold-body p+p{margin-top:11px}
+.fold-body h4{font-family:var(--f-dsp);font-size:13px;font-weight:700;margin:18px 0 7px;
+  color:var(--ink);display:flex;align-items:center;gap:8px}
+.fold-body h4::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--cyan);flex:none}
+.fold-body table{margin:12px 0}
+.fold-body .callout{margin:14px 0}
+.fold-body>*:last-child{margin-bottom:0}
+/* 要点列表 */
+.pts{list-style:none;margin:10px 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.pts li{position:relative;padding-left:19px;font-size:13.5px;line-height:1.65;color:var(--ink-dim)}
+.pts li::before{content:"▸";position:absolute;left:0;top:0;color:var(--cyan);font-size:11px;
+  line-height:1.9}
+.pts li b,.pts li strong{color:var(--ink)}
+.pts.num{counter-reset:p}
+.pts.num li{counter-increment:p;padding-left:25px}
+.pts.num li::before{content:counter(p);font-family:var(--f-mono);font-size:9.5px;font-weight:700;
+  color:var(--cyan);background:oklch(81% 0.13 205/.12);border-radius:4px;width:17px;height:17px;
+  display:grid;place-items:center;line-height:1;top:3px}
+/* ===== 术语：虚线下划线 + 悬浮解释 ===== */
+.term{border-bottom:1px dashed oklch(81% 0.13 205/.5);cursor:help;color:var(--cyan);
+  font-weight:500;white-space:nowrap}
+.term:hover{border-bottom-style:solid;background:oklch(81% 0.13 205/.09)}
+/* ===== 浮动提示卡（术语 / 参数共用） ===== */
+#tip{position:fixed;z-index:90;max-width:310px;padding:13px 15px;border-radius:10px;
+  background:oklch(17% 0.024 255);border:1px solid oklch(81% 0.13 205/.36);
+  box-shadow:0 14px 38px oklch(8% 0.02 255/.66);opacity:0;pointer-events:none;
+  transition:opacity .15s;font-size:12.5px;line-height:1.68}
+#tip.show{opacity:1}
+#tip .tip-t{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--cyan);font-weight:700;margin-bottom:6px}
+#tip .tip-b{color:var(--ink-dim)}
+#tip .tip-b b{color:var(--ink);font-weight:600}
+#tip .tip-r{margin-top:9px;padding-top:9px;border-top:1px solid var(--line-soft);
+  font-family:var(--f-mono);font-size:10.5px;color:var(--ink-faint)}
+#tip .tip-r b{color:var(--lime)}
+/* ===== 参数行：标签 + ? 按钮 ===== */
+.ctl-l{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.qmk{width:16px;height:16px;flex:none;border-radius:50%;border:1px solid var(--line);
+  background:var(--bg-inset);color:var(--ink-faint);font-family:var(--f-mono);font-size:10px;
+  font-weight:700;cursor:help;display:grid;place-items:center;line-height:1;padding:0;
+  transition:.16s}
+.qmk:hover{border-color:var(--cyan);color:var(--cyan);background:oklch(81% 0.13 205/.14)}
+.ctl-hint{font-size:11px;color:var(--ink-faint);margin-top:-2px;line-height:1.5}
+.ctl-hint b{color:var(--ink-dim);font-weight:500}
+/* ===== 投机解码 token 流 ===== */
+.sd-explain{display:grid;grid-template-columns:minmax(0,1fr);gap:0;margin-top:14px;
+  border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;background:var(--bg-inset)}
+.sd-ex-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:10px 14px;background:var(--bg-raised);border-bottom:1px solid var(--line-soft)}
+.sd-lg{display:flex;gap:13px;flex-wrap:wrap;font-family:var(--f-mono);font-size:10px;
+  color:var(--ink-faint);align-items:center}
+.sd-lg i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
+.sd-lg b{width:9px;height:9px;border-radius:2px;display:inline-block}
+.sd-rounds{padding:13px 14px;display:flex;flex-direction:column;gap:9px}
+.sd-rd{display:grid;grid-template-columns:62px minmax(0,1fr);gap:11px;align-items:center}
+.sd-rd-n{font-family:var(--f-mono);font-size:10px;color:var(--ink-faint);text-align:right;line-height:1.35}
+.sd-rd-n b{display:block;color:var(--ink-dim);font-size:11px;font-weight:700}
+.sd-rd-t{display:flex;gap:5px;flex-wrap:wrap;align-items:center;min-width:0}
+.sd-tk{font-family:var(--f-mono);font-size:11px;padding:3px 9px;border-radius:5px;cursor:help;
+  border:1px solid;transition:.15s;position:relative;white-space:nowrap}
+.sd-tk:hover{transform:translateY(-1px)}
+.sd-tk.acc{background:oklch(86% 0.17 132/.13);border-color:oklch(86% 0.17 132/.45);color:var(--lime)}
+.sd-tk.rej{background:oklch(68% 0.19 22/.13);border-color:oklch(68% 0.19 22/.45);color:var(--red);
+  text-decoration:line-through;text-decoration-thickness:1px;opacity:.75}
+.sd-tk.fix{background:oklch(81% 0.13 205/.15);border-color:oklch(81% 0.13 205/.5);color:var(--cyan)}
+.sd-tk.drop{background:transparent;border-color:var(--line-soft);border-style:dashed;
+  color:var(--ink-faint);opacity:.5}
+.sd-arrow{font-family:var(--f-mono);font-size:11px;color:var(--ink-faint);opacity:.6}
+.sd-narr{padding:12px 14px;border-top:1px solid var(--line-soft);font-size:12.5px;
+  line-height:1.72;color:var(--ink-dim);background:var(--bg-panel)}
+.sd-narr b{color:var(--ink);font-weight:600}
+.sd-narr .hl-l{color:var(--lime);font-weight:600}
+.sd-narr .hl-r{color:var(--red);font-weight:600}
+.sd-final{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:10px;
+  padding-top:10px;border-top:1px dashed var(--line-soft)}
+.sd-final-k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);margin-right:4px}
+/* 时间线段 hover */
+.tseg{cursor:help}
+.tl-lgd{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--f-mono);font-size:10px;
+  color:var(--ink-faint);margin-top:7px}
+/* ===== 提问抽屉 ===== */
+#askbtn{position:fixed;right:22px;bottom:22px;z-index:70;display:flex;align-items:center;gap:9px;
+  padding:12px 18px;border-radius:30px;border:1px solid oklch(81% 0.13 205/.45);
+  background:oklch(19% 0.028 253/.96);backdrop-filter:blur(10px);color:var(--ink);cursor:pointer;
+  font-family:var(--f-body);font-size:13px;font-weight:600;
+  box-shadow:0 10px 30px oklch(8% 0.02 255/.5);transition:.2s}
+#askbtn:hover{border-color:var(--cyan);background:oklch(23% 0.035 250/.98);transform:translateY(-2px)}
+#askbtn .ab-i{font-family:var(--f-mono);font-size:14px;font-weight:700;color:var(--cyan)}
+#askdrw{position:fixed;right:0;top:0;bottom:0;width:min(430px,100vw);z-index:95;
+  background:oklch(16% 0.022 255);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;transform:translateX(102%);transition:transform .3s cubic-bezier(.2,.7,.3,1);
+  box-shadow:-18px 0 50px oklch(8% 0.02 255/.5)}
+#askdrw.open{transform:none}
+.ad-h{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;
+  justify-content:space-between;align-items:flex-start;gap:12px;flex:none}
+.ad-h-t{font-family:var(--f-dsp);font-size:15px;font-weight:700;line-height:1.3}
+.ad-h-s{font-size:11.5px;color:var(--ink-faint);margin-top:3px;line-height:1.5}
+.ad-x{width:28px;height:28px;flex:none;border-radius:7px;border:1px solid var(--line);
+  background:var(--bg-inset);color:var(--ink-dim);cursor:pointer;font-size:15px;line-height:1;
+  display:grid;place-items:center;transition:.16s}
+.ad-x:hover{border-color:var(--red);color:var(--red)}
+.ad-search{padding:13px 20px;border-bottom:1px solid var(--line-soft);flex:none}
+.ad-search input{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--line);
+  background:var(--bg-inset);color:var(--ink);font-family:var(--f-body);font-size:13px;outline:none;
+  transition:.16s}
+.ad-search input:focus{border-color:var(--cyan);background:var(--bg-raised)}
+.ad-search input::placeholder{color:var(--ink-faint)}
+.ad-body{flex:1;overflow-y:auto;padding:6px 20px 20px}
+.ad-cat{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);margin:17px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line-soft)}
+.ad-q{border:1px solid var(--line-soft);border-radius:9px;margin-bottom:8px;overflow:hidden;
+  background:var(--bg-panel);transition:border-color .16s}
+.ad-q:hover{border-color:var(--line)}
+.ad-q>summary{list-style:none;cursor:pointer;padding:11px 14px;font-size:12.5px;font-weight:500;
+  line-height:1.5;display:flex;gap:9px;align-items:flex-start;transition:background .16s}
+.ad-q>summary::-webkit-details-marker{display:none}
+.ad-q>summary:hover{background:var(--bg-raised)}
+.ad-q>summary::before{content:"?";font-family:var(--f-mono);font-size:10px;font-weight:700;
+  color:var(--cyan);background:oklch(81% 0.13 205/.13);border-radius:4px;width:17px;height:17px;
+  flex:none;display:grid;place-items:center;line-height:1;margin-top:2px}
+.ad-q[open]>summary{background:var(--bg-raised);border-bottom:1px solid var(--line-soft)}
+.ad-a{padding:12px 14px;font-size:12.5px;line-height:1.75;color:var(--ink-dim)}
+.ad-a b{color:var(--ink);font-weight:600}
+.ad-a code{font-family:var(--f-mono);font-size:11px;background:var(--bg-inset);padding:1px 5px;
+  border-radius:4px;color:var(--cyan)}
+.ad-a p+p{margin-top:9px}
+.ad-a ul{list-style:none;margin:9px 0;display:flex;flex-direction:column;gap:7px;padding:0}
+.ad-a li{position:relative;padding-left:16px;text-align:left}
+.ad-a li::before{content:"▸";position:absolute;left:0;top:0;color:var(--cyan);font-size:10px;
+  line-height:1.9}
+.ad-jump{display:inline-flex;align-items:center;gap:6px;margin-top:11px;padding:6px 11px;
+  border-radius:7px;border:1px solid var(--line);background:var(--bg-inset);color:var(--cyan);
+  font-family:var(--f-mono);font-size:10.5px;cursor:pointer;text-decoration:none;transition:.16s}
+.ad-jump:hover{border-color:var(--cyan);background:oklch(81% 0.13 205/.12)}
+.ad-foot{flex:none;padding:14px 20px;border-top:1px solid var(--line);background:var(--bg-inset)}
+.ad-foot-t{font-size:11.5px;color:var(--ink-faint);line-height:1.65;margin-bottom:10px}
+.ad-copy{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);
+  background:var(--bg-panel);color:var(--ink-dim);font-family:var(--f-body);font-size:12px;
+  cursor:pointer;transition:.16s}
+.ad-copy:hover{border-color:var(--cyan);color:var(--cyan)}
+.ad-empty{padding:30px 10px;text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.7}
+#askmask{position:fixed;inset:0;z-index:92;background:oklch(8% 0.02 255/.52);
+  backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .28s}
+#askmask.open{opacity:1;pointer-events:auto}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
+.reveal{opacity:0;transform:translateY(18px)}
+.reveal.in{animation:fadeUp .62s cubic-bezier(.2,.7,.3,1) both}
+header.hero{animation:fadeUp .7s cubic-bezier(.2,.7,.3,1) both}
+@media(max-width:820px){
+  body{grid-template-columns:1fr}
+  #nav{position:static;height:auto;flex-direction:row;overflow-x:auto;align-items:center;
+    gap:14px;padding:13px;border-right:0;border-bottom:1px solid var(--line)}
+  #nav .nav-label,#nav .nav-foot{display:none}
+  .nav-list{flex-direction:row;gap:7px}
+  .nav-item{white-space:nowrap;padding:7px 11px}
+  .nav-tx small{display:none}
+  .brand{flex-shrink:0}
+  header.hero{padding:36px 20px 30px}
+  section.mod{padding:38px 20px}
+  .bus-stage{grid-template-columns:1fr;min-height:0}
+  .bus-side.vram{border-right:0;border-bottom:1px solid var(--line)}
+  .bus-side.sm{border-left:0;border-top:1px solid var(--line)}
+  .bus-pipe{min-height:74px;flex-direction:row}
+  .pipe-track{height:34px}
+  .hl{grid-template-columns:96px minmax(0,1fr);gap:10px}
+  .urow{grid-template-columns:1fr;gap:9px}
+  .urow-v{text-align:left}
+  .pfx{grid-template-columns:46px 62px minmax(0,1fr);gap:9px}
+  /* 窄屏表格：允许自身横向滚动，不撑破页面 */
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    max-width:100%;font-size:12px}
+  th,td{padding:8px 10px;min-width:72px}
+  td.mono{font-size:11px;white-space:nowrap}
+  th{white-space:nowrap}
+  .panel table{margin:0}
+  .fold>summary{padding:12px 14px;grid-template-columns:18px minmax(0,1fr);gap:10px}
+  .fold-tag{display:none}
+  .fold-body{padding:2px 14px 14px}
+  .sd-rd{grid-template-columns:1fr;gap:5px}
+  .sd-rd-n{text-align:left}
+  .sd-rd-n b{display:inline;margin-right:6px}
+  #askbtn{right:14px;bottom:14px;padding:10px 15px;font-size:12px}
+  #tip{max-width:min(300px,calc(100vw - 28px))}
+  h1{font-size:27px}
+}
+</style>
+</head>
+<body>
+<nav id="nav">
+  <div class="brand">
+    <div class="brand-mark">&#9651;</div>
+    <div>
+      <div class="brand-t">GPU 推理实验室</div>
+      <div class="brand-s">bandwidth lab</div>
+    </div>
+  </div>
+  <div class="nav-label">模块</div>
+  <div class="nav-list">
+    <a class="nav-item" href="#m1"><span class="nav-n">01</span><span class="nav-tx">存储层级<small>权重住在哪里</small></span></a>
+    <a class="nav-item" href="#m2"><span class="nav-n">02</span><span class="nav-tx">一个 token 的旅程<small>为什么卡在搬运</small></span></a>
+    <a class="nav-item" href="#mu"><span class="nav-n">03</span><span class="nav-tx">单位与量纲<small>FLOP / TFLOPS / FLOP·B⁻¹</small></span></a>
+    <a class="nav-item" href="#m3"><span class="nav-n">04</span><span class="nav-tx">量化<small>把数字变小</small></span></a>
+    <a class="nav-item" href="#m4"><span class="nav-n">05</span><span class="nav-tx">Roofline<small>瓶颈如何翻转</small></span></a>
+    <a class="nav-item" href="#m5"><span class="nav-n">06</span><span class="nav-tx">投机解码<small>何时反而更慢</small></span></a>
+    <a class="nav-item" href="#m6"><span class="nav-n">07</span><span class="nav-tx">全景速查<small>一页总结</small></span></a>
+    <a class="nav-item" href="#ms"><span class="nav-n">08</span><span class="nav-tx">数据来源<small>每个数字的出处</small></span></a>
+  </div>
+  <div class="nav-foot">基准硬件<br>RTX 4090 · 24GB<br>1008 GB/s · 165 TFLOPS<br><br>2026-10-04</div>
+</nav>
+<main>
+<header class="hero">
+  <div class="kicker">交互课件 · 硬件视角</div>
+  <h1>大模型推理时，<em>显存</em>、<em>带宽</em>和 GPU 到底在干什么</h1>
+  <p class="lede">
+    这页用可操作的模型回答一串连起来的问题：权重放在哪、"带宽"为什么会成为瓶颈、
+    量化省下了什么、以及为什么投机解码在本地单用户场景很香、在云端大 batch 下反而会变慢。
+    所有数字都按一张 RTX 4090 的真实参数计算，拖动滑块就能看到瓶颈切换的那一刻。
+  </p>
+  <p class="lede" style="margin-bottom:26px;font-size:13.5px;color:var(--ink-faint)">
+    <strong style="color:var(--cyan)">怎么读这页：</strong>
+    概念解释默认<strong>折叠</strong>，标题旁已给出结论，懂的直接跳过、不懂再展开。
+    参数旁的 <span style="display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;
+      border:1px solid var(--line);font-family:var(--f-mono);font-size:9px;vertical-align:-2px">?</span>
+    和带虚线的术语都可以悬浮查看说明。还有疑问就点右下角<strong>「有疑问」</strong>。
+  </p>
+  <div class="spec-row">
+    <div class="spec"><div class="spec-k">VRAM 容量</div><div class="spec-v">24 <small>GB</small></div></div>
+    <div class="spec"><div class="spec-k">显存带宽</div><div class="spec-v">1008 <small>GB/s</small></div></div>
+    <div class="spec"><div class="spec-k">FP16 算力</div><div class="spec-v">165 <small>TFLOPS</small></div></div>
+    <div class="spec"><div class="spec-k">Roofline 拐点</div><div class="spec-v">164 <small>FLOP/B</small></div></div>
+  </div>
+</header>
+
+<section class="mod reveal" id="m1">
+  <div class="mod-head"><span class="mod-n">01</span><h2>权重住在哪里：一张卡上的存储层级</h2></div>
+  <p class="mod-sub">
+    「GPU 的存储很小」和「12GB 显存能装下模型」这两句话不矛盾，因为它们说的是两层不同的东西。
+    点任意一层看它的真实参数，再点底部的模型尺寸，看看它能放进哪一层。
+  </p>
+  <div class="panel">
+    <div class="panel-h"><span class="panel-t">存储层级 · 条宽 ∝ log(容量) · 颜色越亮 = 带宽越高</span></div>
+    <div class="hier" id="hier"></div>
+    <div class="marker-row">
+      <span class="panel-t" style="align-self:center;margin-right:4px">放入模型：</span>
+      <button class="mk" data-gb="3.5">7B int4 · 3.5GB</button>
+      <button class="mk on" data-gb="14">7B fp16 · 14GB</button>
+      <button class="mk" data-gb="140">70B fp16 · 140GB</button>
+      <button class="mk" data-gb="0">不放</button>
+    </div>
+    <div class="reads" id="hier-read"></div>
+  </div>
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">为什么权重只能住 VRAM，不能住在计算核心里？</span>
+      <span class="fold-tldr">因为计算芯片自己的存储只有<b>几十 MB</b>，连 1B 模型都装不下。</span>
+      <span class="fold-tag">展开</span>
+    </summary>
+    <div class="fold-body">
+      <h4>芯片内部的存储极小</h4>
+      <p>
+        GPU 计算芯片（die）上的寄存器和 L1/L2 缓存加起来只有<strong>几十 MB</strong>。
+        所以权重只能住在 <span class="term" data-t="vram">VRAM</span>，
+        也就是规格表里标着 12GB / 24GB / 80GB 的那个地方。
+      </p>
+
+      <h4>VRAM 在芯片外面，不在里面</h4>
+      <p>
+        VRAM 是<strong>独立的显存颗粒</strong>，物理上焊在计算芯片旁边的电路板上。
+        两者之间靠一组物理连线相连，这条线的传输速率上限就是
+        <span class="term" data-t="bw">显存带宽</span>。
+      </p>
+
+      <h4>所以「带宽」和「是不是本机」无关</h4>
+      <p>
+        同一张卡内部，数据从显存颗粒搬到计算核心<strong>也要花时间</strong>。
+        这就是整个推理性能故事的起点 —— 和网络、和跨机器通信都没有关系。
+      </p>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">「把全部权重搬进 GPU」到底是怎么搬的？</span>
+      <span class="fold-tldr">不是一次性塞满缓存，而是<b>逐层流式</b>：搬一层 → 算一层 → 丢掉。</span>
+      <span class="fold-tag">纠正误解</span>
+    </summary>
+    <div class="fold-body">
+      <h4>常见的错误图景</h4>
+      <p>
+        很多人以为是把 14 GB <strong>一次性塞进计算芯片</strong>，然后芯片就「拿着」模型开始算。
+        按上一条的结论，那确实塞不下。
+      </p>
+
+      <h4>真实过程：流水线式过一遍</h4>
+      <ol class="pts num">
+        <li>从 VRAM 搬第 1 层权重进片内缓存</li>
+        <li>算第 1 层，算完<strong>立刻丢掉</strong>这层权重，腾出空间</li>
+        <li>搬第 2 层 → 算第 2 层 → 丢掉……一直到第 32 层</li>
+      </ol>
+      <p>
+        一次前向传播把所有层都这样过一遍，<strong>累计搬运量</strong>才等于整个模型的大小。
+        片内缓存在任意时刻只持有<strong>其中一层</strong>，所以几十 MB 就够用。
+      </p>
+      <p style="color:var(--ink-faint);font-size:12.5px">
+        模块 02 的动画就是在演这个过程，可以直接去看。
+      </p>
+    </div>
+  </details>
+</section>
+
+<section class="mod reveal" id="m2">
+  <div class="mod-head"><span class="mod-n">02</span><h2>一个 token 的旅程：带宽瓶颈怎么形成</h2></div>
+  <p class="mod-sub">
+    按下播放，看权重一层层从 VRAM 流进计算核心。重点看右下角那两条利用率条 ——
+    这是理解后面所有内容的那个「啊哈」时刻。
+  </p>
+  <div class="panel">
+    <div class="panel-h">
+      <span class="panel-t">单请求解码 · batch = 1 · 7B fp16</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn pri" id="m2-play">▶ 播放</button>
+        <button class="btn" id="m2-reset">重置</button>
+        <div class="seg" id="m2-speed">
+          <button data-s="0.5">0.5×</button><button data-s="1" class="on">1×</button><button data-s="3">3×</button>
+        </div>
+      </div>
+    </div>
+    <div class="bus-stage">
+      <div class="bus-side vram">
+        <div class="bus-cap"><span>VRAM · 权重 32 层</span><span id="m2-vram-n">0 / 32</span></div>
+        <div class="layer-grid" id="m2-layers"></div>
+        <div class="pipe-lbl" style="text-align:left;margin-top:11px">
+          灰 = 未搬 · <span style="color:var(--amber)">黄 = 正在搬</span> · <span style="color:var(--cyan)">蓝 = 已用过</span>
+        </div>
+      </div>
+      <div class="bus-pipe">
+        <div class="pipe-lbl">显存<br>带宽</div>
+        <div class="pipe-track" id="m2-track"></div>
+        <div class="pipe-lbl" style="font-weight:700;color:var(--amber)">1008<br>GB/s</div>
+      </div>
+      <div class="bus-side sm">
+        <div class="bus-cap"><span>计算核心 SM</span><span id="m2-core-n">空闲</span></div>
+        <div class="sm-core-grid" id="m2-cores"></div>
+        <div class="util-row">
+          <div class="util">
+            <div class="util-top"><span>带宽利用率</span><span id="m2-bw-v" style="color:var(--amber);font-weight:700">0%</span></div>
+            <div class="util-bar"><div class="util-fill" id="m2-bw-f" style="width:0;background:var(--amber)"></div></div>
+          </div>
+          <div class="util">
+            <div class="util-top"><span>算力利用率</span><span id="m2-cp-v" style="color:var(--lime);font-weight:700">0%</span></div>
+            <div class="util-bar"><div class="util-fill" id="m2-cp-f" style="width:0;background:var(--lime)"></div></div>
+          </div>
+        </div>
+        <div class="tok-out" id="m2-tokens"></div>
+      </div>
+    </div>
+    <div class="reads">
+      <div class="read"><div class="read-k">已生成</div><div class="read-v c-cy" id="m2-r-tok">0 <small>token</small></div></div>
+      <div class="read"><div class="read-k">累计搬运</div><div class="read-v c-am" id="m2-r-byte">0 <small>GB</small></div></div>
+      <div class="read"><div class="read-k">累计计算</div><div class="read-v c-li" id="m2-r-flop">0 <small>GFLOP</small></div></div>
+      <div class="read"><div class="read-k">算术强度</div><div class="read-v c-vi">1 <small>FLOP/B</small></div>
+        <div class="read-n">每搬 1 字节只做 1 次运算</div></div>
+    </div>
+  </div>
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">为什么每个 token 都要把整个模型重搬一遍？</span>
+      <span class="fold-tldr">因为生成是<b>自回归</b>的：不知道第 N 个 token，就算不出第 N+1 个。</span>
+      <span class="fold-tag">展开推导</span>
+    </summary>
+    <div class="fold-body">
+      <h4>一句话原因</h4>
+      <p>
+        要算第 N+1 个 token，必须先知道第 N 个是什么。
+        这是一条<strong>严格串行</strong>的链条，<strong>无法把多步合并</strong>，
+        每一步都得完整跑一次模型的全部层。
+      </p>
+
+      <h4>于是一步的收支是这样</h4>
+      <ul class="pts">
+        <li><strong>支出</strong>：把 32 层权重全搬一遍 ≈ <code>14 GB</code></li>
+        <li><strong>产出</strong>：只算出 1 个 token，计算量 <code>2 × 7e9 = 14 GFLOP</code></li>
+      </ul>
+
+      <h4>两条耗时赛跑，慢的那条说话</h4>
+      <table>
+        <tr><th>项</th><th>算式</th><th>受什么限制</th></tr>
+        <tr><td>搬运耗时</td><td class="mono">14 GB ÷ 1008 GB/s ≈ <strong style="color:var(--amber)">13.9 ms</strong></td><td>带宽</td></tr>
+        <tr><td>计算耗时</td><td class="mono">14 GFLOP ÷ 165 TFLOPS ≈ <strong style="color:var(--lime)">0.085 ms</strong></td><td>算力</td></tr>
+        <tr><td>实际单步</td><td class="mono">max(13.9, 0.085) = <strong>13.9 ms</strong></td><td>两者重叠，取较慢者</td></tr>
+        <tr><td>算力利用率</td><td class="mono">0.085 ÷ 13.9 ≈ <strong style="color:var(--red)">0.6%</strong></td><td>99.4% 在等数据</td></tr>
+      </table>
+
+      <div class="callout warn">
+        <div class="callout-t">这就是带宽瓶颈</div>
+        <p>
+          单用户解码时，这张 165 TFLOPS 的卡实际只发挥出<strong>不到 1%</strong> 的算力。
+        </p>
+        <p>
+          不是卡不行，是<strong>工作负载的形状不对</strong>：搬的数据太多、算的太少。
+          衡量这个形状的指标叫 <span class="term" data-t="ai">算术强度</span>，它是模块 05 的主角。
+        </p>
+      </div>
+    </div>
+  </details>
+</section>
+
+<section class="mod reveal" id="mu">
+  <div class="mod-head"><span class="mod-n">03</span><h2>单位与量纲：FLOP、TFLOPS、FLOP/B</h2></div>
+  <p class="mod-sub">
+    这三个单位只差几个字母，但量的是完全不同的东西。
+    区分它们只需要问一句话：<strong>有没有「每秒」，有没有「每字节」</strong>。
+    下面任意固定两个滑块，第三个会自己算出来 —— 它们永远被一个等式锁在一起。
+  </p>
+
+  <div class="panel">
+    <div class="panel-h">
+      <span class="panel-t">三角关系 · 固定两个，推出第三个</span>
+      <div class="seg" id="u-mode">
+        <button data-m="t" class="on">求时间</button>
+        <button data-m="ai">求算术强度</button>
+      </div>
+    </div>
+
+    <div class="urow" id="u-r1">
+      <div class="urow-k">工作量<small>FLOP · 总量</small>
+        <button class="qmk" data-t="flop" aria-label="什么是 FLOP">?</button></div>
+      <input type="range" id="u-flop" min="0" max="100" step="1" value="43">
+      <div class="urow-v" id="u-flop-v">14 <small>GFLOP</small></div>
+    </div>
+    <div class="urow" id="u-r2">
+      <div class="urow-k">算力<small>TFLOPS · 速度</small>
+        <button class="qmk" data-t="tflops" aria-label="什么是 TFLOPS">?</button></div>
+      <input type="range" id="u-peak" min="1" max="1200" step="1" value="165">
+      <div class="urow-v" id="u-peak-v">165 <small>TFLOPS</small></div>
+    </div>
+    <div class="urow solved" id="u-r3">
+      <div class="urow-k">计算耗时<small>ms · 结果</small></div>
+      <input type="range" min="0" max="100" value="50" disabled>
+      <div class="urow-v" id="u-out-v">0.085 <small>ms</small></div>
+    </div>
+
+    <div class="ueq" id="u-eq"></div>
+
+    <div class="reads" style="margin-top:16px">
+      <div class="read"><div class="read-k">量纲检查</div><div class="read-v c-vi" id="u-dim" style="font-size:12.5px">FLOP ÷ (FLOP/s) = s</div>
+        <div class="read-n">单位必须能约掉，否则公式是错的</div></div>
+      <div class="read"><div class="read-k">这是哪一类</div><div class="read-v c-cy" id="u-kind" style="font-size:14px">名词 ÷ 动词 = 时间</div></div>
+      <div class="read"><div class="read-k">生活类比</div><div class="read-v" id="u-ana" style="font-size:12.5px;color:var(--ink-dim)">10 吨货 ÷ 每小时 5 吨 = 2 小时</div></div>
+    </div>
+  </div>
+
+  <details class="fold" open>
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">三个单位，三种词性</span>
+      <span class="fold-tldr">名词「有多少活」、动词「干活多快」、形容词「这活什么形状」。</span>
+      <span class="fold-tag">对照表</span>
+    </summary>
+    <div class="fold-body">
+      <table>
+        <tr><th>单位</th><th>词性</th><th>量的是</th><th>有没有时间</th><th>生活类比</th></tr>
+        <tr><td class="mono">GFLOP</td><td style="color:var(--cyan)">名词</td><td>工作量总量，10⁹ 次浮点运算</td>
+          <td>无</td><td>「这趟要搬 10 吨货」</td></tr>
+        <tr><td class="mono">TFLOPS</td><td style="color:var(--lime)">动词</td><td>运算速度，10¹² 次/秒</td>
+          <td style="color:var(--lime)">有（Per Second）</td><td>「这车每小时能搬 5 吨」</td></tr>
+        <tr><td class="mono">FLOP/B</td><td style="color:var(--violet)">形容词</td><td>每搬 1 字节配多少次运算</td>
+          <td>无（是比例）</td><td>「每搬 1 公斤要拧几颗螺丝」</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">FLOPs 和 FLOPS 怎么区分？</span>
+      <span class="fold-tldr">小写 s = 工作<b>量</b>，大写 S = 速<b>度</b>（Per Second）。</span>
+      <span class="fold-tag">易错点</span>
+    </summary>
+    <div class="fold-body">
+      <ul class="pts">
+        <li><code>FLOPs</code> —— 小写 s 是<strong>复数</strong>，指工作<strong>量</strong></li>
+        <li><code>FLOPS</code> —— 大写 S 是 Per <strong>S</strong>econd，指速<strong>度</strong></li>
+      </ul>
+
+      <h4>论文里大量混用，怎么自保</h4>
+      <ul class="pts">
+        <li><strong>看单位</strong>：有没有除以时间，这是唯一可靠的判别方法</li>
+        <li><strong>看数量级</strong>：模型 FLOPs 是 10⁹~10¹² 的固定值；硬件 FLOPS 是厂商标注的峰值</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">十进制前缀 G / T / P 到底差多少？</span>
+      <span class="fold-tldr">每级差 1000 倍。点开有交互表，还能看到 GB 的两套进制陷阱。</span>
+      <span class="fold-tag">可交互</span>
+    </summary>
+    <div class="fold-body">
+      <p>点一下任意前缀，看它在本页语境里对应什么。</p>
+      <div class="panel" style="padding:12px;margin:12px 0">
+        <div id="u-pfx"></div>
+      </div>
+      <div class="callout warn">
+        <div class="callout-t">注意两套进制并存</div>
+        <p>
+          算力的 G/T/P 是<strong>十进制</strong>（10⁹ / 10¹² / 10¹⁵）。
+          但显存容量的 GB 可能是十进制 10⁹，也可能是二进制 2³⁰（= GiB，大 7.4%）。
+        </p>
+        <p>
+          本页统一按十进制：<code>7e9 × 2 = 1.4e10</code> 字节 = 14 GB；
+          按 GiB 算则是 13.04 GiB。
+        </p>
+        <p>
+          两者差 <strong>7.4%</strong>，估算瓶颈时可忽略，但<strong>下载模型文件对体积时会对不上</strong>。
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">完整串一遍：7B 模型解码一个 token 的六个数</span>
+      <span class="fold-tldr">最后两行一对比就是全部故事：<b>能做 164 次，只给了 1 次</b>。</span>
+      <span class="fold-tag">总账</span>
+    </summary>
+    <div class="fold-body">
+      <table>
+        <tr><th>步骤</th><th>算式</th><th>单位类型</th><th>结果</th></tr>
+        <tr><td>搬运量</td><td class="mono">7e9 参数 × 2 字节</td><td style="color:var(--cyan)">名词（量）</td>
+          <td class="mono">14 GB</td></tr>
+        <tr><td>计算量</td><td class="mono">2 × 7e9（每参数 1 乘 1 加）</td><td style="color:var(--cyan)">名词（量）</td>
+          <td class="mono">14 GFLOP</td></tr>
+        <tr><td>搬运耗时</td><td class="mono">14 GB ÷ 1008 GB/s</td><td style="color:var(--lime)">量 ÷ 速度</td>
+          <td class="mono" style="color:var(--amber)">13.9 ms</td></tr>
+        <tr><td>计算耗时</td><td class="mono">14 GFLOP ÷ 165 TFLOPS</td><td style="color:var(--lime)">量 ÷ 速度</td>
+          <td class="mono" style="color:var(--lime)">0.085 ms</td></tr>
+        <tr><td>算术强度</td><td class="mono">14e9 FLOP ÷ 14e9 Byte</td><td style="color:var(--violet)">形容词（比例）</td>
+          <td class="mono" style="color:var(--violet)">1 FLOP/B</td></tr>
+        <tr><td>硬件拐点</td><td class="mono">165e12 ÷ 1008e9</td><td style="color:var(--violet)">形容词（比例）</td>
+          <td class="mono" style="color:var(--cyan)">164 FLOP/B</td></tr>
+      </table>
+      <div class="callout">
+        <div class="callout-t">最后两行就是全部故事</div>
+        <p>
+          硬件在搬 1 个字节的时间里，<strong>本来能做 164 次运算</strong>。
+        </p>
+        <p>
+          而你只给了它 <strong>1 次</strong>。剩下 163 次的能力在空转 —— 这就是带宽瓶颈的严格定义。
+        </p>
+      </div>
+    </div>
+  </details>
+</section>
+
+<section class="mod reveal" id="m3">
+  <div class="mod-head"><span class="mod-n">04</span><h2>量化：把每个数字存得更小</h2></div>
+  <p class="mod-sub">
+    既然瓶颈是「搬的字节太多」，最直接的办法就是让每个权重占更少字节。
+    拖动精度滑块，同时看三件事变化：显存占用、生成速度、权重数值的保真度。
+  </p>
+  <div class="panel">
+    <div class="panel-h">
+      <span class="panel-t">量化沙盘</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div class="seg" id="q-model">
+          <button data-b="7" class="on">7B</button><button data-b="14">14B</button>
+          <button data-b="32">32B</button><button data-b="70">70B</button>
+        </div>
+        <div class="seg" id="q-gpu">
+          <button data-v="12">12GB</button><button data-v="24" class="on">24GB</button><button data-v="80">80GB</button>
+        </div>
+      </div>
+    </div>
+    <div class="ctl">
+      <div class="ctl-top">
+        <span class="ctl-l">数值精度
+          <button class="qmk" data-t="prec" aria-label="什么是数值精度">?</button>
+        </span>
+        <span class="ctl-v" id="q-prec">fp16 · 2 字节/参数</span>
+      </div>
+      <input type="range" id="q-slider" min="0" max="4" step="1" value="1">
+      <div class="ctl-hint" id="q-hint">每个权重用 <b>2 字节</b>存储 · 推理默认精度</div>
+    </div>
+    <div class="q-split">
+      <div>
+        <div class="panel-t">显存占用 vs 容量</div>
+        <div class="vram-gauge">
+          <div class="vram-fill" id="q-fill"><span id="q-fill-t"></span></div>
+          <div class="vram-over" id="q-over" style="display:none">&#9888; 超出显存容量</div>
+        </div>
+        <div class="reads" style="grid-template-columns:1fr 1fr">
+          <div class="read"><div class="read-k">模型体积</div><div class="read-v c-cy" id="q-size">14.0 <small>GB</small></div>
+            <div class="read-n" id="q-size-n">7e9 × 2 字节</div></div>
+          <div class="read"><div class="read-k">理论速度</div><div class="read-v c-li" id="q-tps">72 <small>tok/s</small></div>
+            <div class="read-n" id="q-tps-n">单步 13.9 ms</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-t">权重保真度 · 同一组权重在该精度下的样子</div>
+        <div class="wgrid" id="q-wgrid"></div>
+        <div class="panel-t" style="margin-top:16px">可表示的数值档位（<span id="q-levels">65536</span> 档）</div>
+        <div class="numline" id="q-numline"></div>
+        <div class="read-n" style="margin-top:7px" id="q-fid-note">
+          fp16 有 6.5 万档，肉眼看不出和原始值的差别。
+        </div>
+      </div>
+    </div>
+  </div>
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">体积是怎么算的？各精度横向对比</span>
+      <span class="fold-tldr"><b>参数数量 × 每参数字节数</b>，就三步，没有别的。</span>
+      <span class="fold-tag">算法</span>
+    </summary>
+    <div class="fold-body">
+      <h4>三步公式</h4>
+      <p>
+        7B 的意思是<strong>70 亿个权重数字</strong>，fp16 下每个占 2 字节，于是
+        <code>7e9 × 2 = 14e9 字节 = 14 GB</code>。
+      </p>
+      <table>
+        <tr><th>精度</th><th>字节/参数</th><th>7B 体积</th><th>可表示档位</th><th>常见用途</th></tr>
+        <tr><td>fp32</td><td class="mono">4</td><td class="mono">28 GB</td><td class="mono">~4.3e9</td><td>训练</td></tr>
+        <tr><td>fp16 / bf16</td><td class="mono">2</td><td class="mono">14 GB</td><td class="mono">65536</td><td>推理默认</td></tr>
+        <tr><td>int8</td><td class="mono">1</td><td class="mono">7 GB</td><td class="mono">256</td><td>几乎无损</td></tr>
+        <tr><td>int4</td><td class="mono">0.5</td><td class="mono">3.5 GB</td><td class="mono">16</td><td>本地部署主力</td></tr>
+        <tr><td>int2</td><td class="mono">0.25</td><td class="mono">1.75 GB</td><td class="mono">4</td><td>实验性，质量明显下降</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">量化省的不只是显存，还有速度</span>
+      <span class="fold-tldr">搬运量少 4 倍 → <b>理论吞吐快接近 4 倍</b>。这才是本地部署的最大价值。</span>
+      <span class="fold-tag">关键</span>
+    </summary>
+    <div class="fold-body">
+      <h4>双重收益</h4>
+      <ul class="pts">
+        <li><strong>省显存</strong> —— 显而易见的那一半，决定「能不能跑」</li>
+        <li><strong>省时间</strong> —— 常被忽略的那一半：搬的字节少了，<strong>单步耗时同比下降</strong></li>
+      </ul>
+      <p>
+        int4 相对 fp16 搬运量少 4 倍，理论吞吐就快接近 4 倍。
+        这<strong>不是副作用</strong>，而是量化在本地部署里最大的价值。
+      </p>
+
+      <h4>代价是精度损失，但没想象中严重</h4>
+      <p>
+        模型有几十亿个参数，<strong>单个权重的舍入误差会在整体中被大量平均掉</strong>。
+      </p>
+      <ul class="pts">
+        <li><strong>int8</strong> —— 基本无损</li>
+        <li><strong>int4</strong> —— 多数任务上可接受，本地部署主力</li>
+        <li><strong>int2</strong> —— 开始明显掉质量</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">12GB 显存怎么可能跑得动 125B 的模型？</span>
+      <span class="fold-tldr">MoE <b>稀疏激活</b> + 激进量化 + 分层 offload，三者叠加，不是单一魔法。</span>
+      <span class="fold-tag">答疑</span>
+    </summary>
+    <div class="fold-body">
+      <p>
+        以笔记里那个 Qwen3.8 Flash Next 为例，它是 <strong>MoE 架构</strong>，
+        125B 是<strong>总参数量</strong>而不是每步要搬的量。三层机制叠在一起：
+      </p>
+      <ol class="pts num">
+        <li><strong>稀疏激活</strong> —— 每生成一个 token 只激活少数几个专家，
+          真正要搬的激活参数可能只有<strong>十几 B 量级</strong></li>
+        <li><strong>4-bit 量化</strong> —— 再把这十几 B 的体积压掉 4 倍</li>
+        <li><strong>分层 offload</strong> —— 不常用的专家放在主机内存，按需换入</li>
+      </ol>
+      <p>
+        三者叠加后，<strong>热路径数据量</strong>才压到 12GB 以内。
+        任何一环单独拿出来都做不到。
+      </p>
+    </div>
+  </details>
+</section>
+
+<section class="mod reveal" id="m4">
+  <div class="mod-head"><span class="mod-n">05</span><h2>Roofline：瓶颈如何随 batch 翻转</h2></div>
+  <p class="mod-sub">
+    这是整页的核心模块，也是回答「为什么云端不靠投机解码提速」的地方。
+    先看这个名字是怎么来的，再拖动 batch size，看那个点沿着屋顶线移动 ——
+    越过拐点，瓶颈就从带宽换成了算力。
+  </p>
+
+  <details class="fold" open>
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">名字从哪来：为什么叫「屋顶线」</span>
+      <span class="fold-tldr">把带宽斜线和算力平线画一起，<b>形状就像房子的屋顶</b>。</span>
+      <span class="fold-tag">图解</span>
+    </summary>
+    <div class="fold-body">
+      <p>
+        2009 年由 Williams、Waterman、Patterson 在 <em>Communications of the ACM</em> 提出，
+        原文标题 <em>Roofline: An Insightful Visual Performance Model for Multicore Architectures</em>。
+      </p>
+      <p>
+        要解决的问题很朴素：一块芯片有<strong>两种互相独立的上限</strong>，
+        怎么一眼看出当前程序被哪一个卡住。
+      </p>
+      <div class="roof-art">
+        <svg viewBox="0 0 400 258" aria-label="Roofline 名字来源示意图">
+          <defs>
+            <linearGradient id="rg-a" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stop-color="oklch(82% 0.15 72/.1)"/>
+              <stop offset="1" stop-color="oklch(82% 0.15 72/.42)"/>
+            </linearGradient>
+          </defs>
+          <line x1="46" y1="214" x2="384" y2="214" stroke="oklch(31% 0.03 250)" stroke-width="1.3"/>
+          <line x1="46" y1="214" x2="46" y2="26" stroke="oklch(31% 0.03 250)" stroke-width="1.3"/>
+          <path d="M46 214 L186 62 L384 62 L384 214 Z" fill="url(#rg-a)" opacity=".5"/>
+          <line x1="46" y1="214" x2="186" y2="62" stroke="oklch(82% 0.15 72)" stroke-width="3"
+            stroke-linecap="round"/>
+          <line x1="186" y1="62" x2="384" y2="62" stroke="oklch(68% 0.19 22)" stroke-width="3"
+            stroke-linecap="round"/>
+          <line x1="186" y1="62" x2="186" y2="214" stroke="oklch(81% 0.13 205/.5)" stroke-width="1"
+            stroke-dasharray="4 4"/>
+          <circle cx="186" cy="62" r="5" fill="oklch(81% 0.13 205)" stroke="oklch(95% 0.01 250)" stroke-width="1.8"/>
+          <text x="78" y="150" fill="oklch(82% 0.15 72)" font-family="JetBrains Mono, monospace"
+            font-size="10.5" font-weight="700" transform="rotate(-47 78 150)">斜屋顶 = 带宽上限</text>
+          <text x="212" y="52" fill="oklch(68% 0.19 22)" font-family="JetBrains Mono, monospace"
+            font-size="10.5" font-weight="700">平屋顶 = 算力上限</text>
+          <text x="186" y="232" fill="oklch(81% 0.13 205)" font-family="JetBrains Mono, monospace"
+            font-size="10" font-weight="700" text-anchor="middle">拐点 ridge point</text>
+          <text x="268" y="152" fill="oklch(72% 0.022 245)" font-family="Noto Sans SC, sans-serif"
+            font-size="11.5" text-anchor="middle">屋顶下方 = 可达性能</text>
+          <text x="268" y="170" fill="oklch(54% 0.025 245)" font-family="Noto Sans SC, sans-serif"
+            font-size="10.5" text-anchor="middle">任何程序都压在屋顶以下</text>
+          <text x="215" y="250" fill="oklch(54% 0.025 245)" font-family="JetBrains Mono, monospace"
+            font-size="10" text-anchor="middle">算术强度 FLOP / Byte  →</text>
+          <text x="16" y="124" fill="oklch(54% 0.025 245)" font-family="JetBrains Mono, monospace"
+            font-size="10" text-anchor="middle" transform="rotate(-90 16 124)">达成算力 FLOPS  →</text>
+        </svg>
+        <div>
+          <h4 style="margin-top:0">斜的那段 = 带宽上限</h4>
+          <p>
+            算术强度越低，每搬一个字节能换到的运算越少，可达算力随强度<strong>线性下降</strong>。
+            画出来是斜线：<code>可达算力 = 算术强度 × 带宽</code>。
+          </p>
+          <h4>平的那段 = 算力上限</h4>
+          <p>
+            强度再高，芯片也只有那么多计算单元，性能顶在峰值<strong>不再上涨</strong>。
+            画出来是水平线。
+          </p>
+          <h4>两条一拼，就是屋顶</h4>
+          <p>
+            左边斜坡、右边屋脊，所以论文里把拐点叫 <code>ridge point</code>（屋脊点）。
+            程序无论怎么优化，<strong>性能点永远在屋顶以下</strong>；
+            点贴着哪一段，就说明被哪个上限卡住。
+          </p>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="callout-t">为什么这个图这么有用</div>
+        <p>
+          在它之前，判断「程序慢是算得不够快还是数据供不上」要靠经验和 profiler 逐项猜。
+          Roofline 把它变成一个<strong>一维坐标上的位置问题</strong>：
+          算出算术强度，和拐点比大小，<strong>瓶颈归属立刻确定，连测都不用测</strong>。
+        </p>
+        <p>
+          对大模型推理结论格外干净：<strong>算术强度几乎等于 batch size</strong>。
+          所以「该不该开大 batch」「投机解码有没有用」都能化简成「我在屋顶的哪一段上」。
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <h3>现在动手试：拖动 batch，看点在屋顶上移动</h3>
+  <div class="panel">
+    <div class="panel-h">
+      <span class="panel-t">Roofline 模型 · RTX 4090 · 7B fp16</span>
+      <div class="seg" id="rf-preset">
+        <button data-b="1" class="on">本地单用户</button>
+        <button data-b="32">小型服务</button>
+        <button data-b="256">云端 API</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <div class="ctl-top">
+        <span class="ctl-l">Batch size
+          <button class="qmk" data-t="batch" aria-label="什么是 batch size">?</button>
+        </span>
+        <span class="ctl-v" id="rf-bs">1</span>
+      </div>
+      <input type="range" id="rf-slider" min="0" max="100" step="1" value="0">
+      <div class="ctl-hint" id="rf-hint">同时处理 <b>1</b> 个请求 · 算术强度 ≈ batch size，所以这个滑块等于在屋顶上左右移动</div>
+    </div>
+    <div class="rf-wrap">
+      <div>
+        <canvas id="rf-canvas" width="760" height="470"></canvas>
+      </div>
+      <div>
+        <div class="reads" style="grid-template-columns:1fr 1fr;margin-top:0">
+          <div class="read"><div class="read-k">算术强度</div><div class="read-v c-vi" id="rf-ai">1.0 <small>F/B</small></div>
+            <div class="read-n">拐点 = 164</div></div>
+          <div class="read"><div class="read-k">达成算力</div><div class="read-v c-am" id="rf-perf">1.0 <small>TFLOPS</small></div>
+            <div class="read-n">峰值 165</div></div>
+          <div class="read"><div class="read-k">算力利用率</div><div class="read-v" id="rf-util">0.6%</div></div>
+          <div class="read"><div class="read-k">带宽利用率</div><div class="read-v c-am" id="rf-bwu">100%</div></div>
+          <div class="read"><div class="read-k">单步耗时</div><div class="read-v c-cy" id="rf-step">13.9 <small>ms</small></div></div>
+          <div class="read"><div class="read-k">总吞吐</div><div class="read-v c-li" id="rf-thru">72 <small>tok/s</small></div>
+            <div class="read-n" id="rf-thru-n">全部请求合计</div></div>
+        </div>
+        <div class="verdict mem" id="rf-verdict">
+          <div class="verdict-t" id="rf-verdict-t">■ 带宽瓶颈</div>
+          <p id="rf-verdict-p">
+            算术强度 1.0 远低于拐点 164，GPU 绝大部分时间在等权重搬进来。
+            算力几乎全闲 —— 这正是投机解码能白捡性能的场景。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">batch 为什么能改变瓶颈？</span>
+      <span class="fold-tldr">一次搬进来的权重<b>可以同时服务多个请求</b>，搬运量不变、计算量翻倍。</span>
+      <span class="fold-tag">核心洞察</span>
+    </summary>
+    <div class="fold-body">
+      <h4>关键在于权重可以复用</h4>
+      <ul class="pts">
+        <li><strong>batch=1</strong> —— 搬 14 GB，只算出 1 个 token</li>
+        <li><strong>batch=64</strong> —— 还是搬同样的 14 GB，一次算出 64 个 token（分属 64 个用户）</li>
+      </ul>
+      <p>
+        <strong>搬运量不变，计算量翻 64 倍</strong> —— 算术强度就这样被线性推高。
+      </p>
+      <table>
+        <tr><th>Batch</th><th>搬运量</th><th>计算量</th><th>算术强度</th><th>瓶颈</th><th>总吞吐</th></tr>
+        <tr><td class="mono">1</td><td class="mono">14 GB</td><td class="mono">14 GFLOP</td><td class="mono">1.0</td>
+          <td style="color:var(--amber)">带宽</td><td class="mono">72 tok/s</td></tr>
+        <tr><td class="mono">32</td><td class="mono">14 GB</td><td class="mono">448 GFLOP</td><td class="mono">32</td>
+          <td style="color:var(--amber)">带宽</td><td class="mono">2304 tok/s</td></tr>
+        <tr><td class="mono">164</td><td class="mono">14 GB</td><td class="mono">2.3 TFLOP</td><td class="mono">164</td>
+          <td style="color:var(--cyan)">拐点</td><td class="mono">11808 tok/s</td></tr>
+        <tr><td class="mono">512</td><td class="mono">14 GB</td><td class="mono">7.2 TFLOP</td><td class="mono">512</td>
+          <td style="color:var(--red)">算力</td><td class="mono">~11800 tok/s</td></tr>
+      </table>
+      <p>
+        注意最后两行：从 164 到 512，吞吐<strong>几乎不再增长</strong>，因为算力已经打满了。
+      </p>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">一处自我更正：「传送带满载」这个比喻是错的</span>
+      <span class="fold-tldr">带宽利用率两种场景下<b>都接近 100%</b>，真正变的是算力利用率。</span>
+      <span class="fold-tag">勘误</span>
+    </summary>
+    <div class="fold-body">
+      <p>
+        我之前说大 batch 下「传送带已经满载」，这个说法不准确。
+      </p>
+      <h4>真实情况</h4>
+      <ul class="pts">
+        <li><strong>带宽利用率</strong> —— 两种场景下都接近 100%，<strong>没有变化</strong></li>
+        <li><strong>算力利用率</strong> —— 从 0.6% 涨到 100%，<strong>这才是变的那个</strong></li>
+      </ul>
+      <p>
+        越过拐点后算力被打满，此时<strong>多算一点都要付真实的时间代价</strong>。
+      </p>
+      <p>
+        投机解码的本质是<strong>「多算换少搬」</strong>，所以它只在算力有富余时免费，
+        算力饱和后就变成纯开销 —— 这是下一个模块的主题。
+      </p>
+    </div>
+  <h3>同一张卡有多个拐点：换口径就换数</h3>
+  <p>
+    上面一直说「4090 的拐点是 164」，这句话其实<strong>不完整</strong>。
+    拐点是 <code>峰值算力 ÷ 带宽</code> 算出来的，而分子分母<strong>各有多个口径</strong>，
+    组合出来的拐点能差几十倍。下面两组按钮各换一个，看拐点怎么跳。
+  </p>
+  <div class="panel">
+    <div class="panel-h">
+      <span class="panel-t">拐点矩阵 · 分子换精度 · 分母换存储层级</span>
+      <span class="panel-t" id="rp-base">RTX 4090</span>
+    </div>
+    <div class="ctl">
+      <div class="ctl-top">
+        <span class="ctl-l">分子：算力口径
+          <button class="qmk" data-t="peakkind" aria-label="算力口径是什么">?</button>
+        </span>
+      </div>
+      <div class="seg" id="rp-num" style="flex-wrap:wrap">
+        <button data-i="0">FP32 CUDA 核</button>
+        <button data-i="1" class="on">FP16 Tensor · dense</button>
+        <button data-i="2">FP16 Tensor · sparse</button>
+        <button data-i="3">INT8 Tensor</button>
+      </div>
+      <div class="ctl-hint" id="rp-num-h"></div>
+    </div>
+    <div class="ctl">
+      <div class="ctl-top">
+        <span class="ctl-l">分母：数据住在哪一层
+          <button class="qmk" data-t="bwlevel" aria-label="为什么分母会变">?</button>
+        </span>
+      </div>
+      <div class="seg" id="rp-den" style="flex-wrap:wrap">
+        <button data-i="0">L2 缓存</button>
+        <button data-i="1" class="on">VRAM</button>
+        <button data-i="2">主机内存</button>
+      </div>
+      <div class="ctl-hint" id="rp-den-h"></div>
+    </div>
+    <div class="ueq" id="rp-eq"></div>
+    <div class="reads">
+      <div class="read"><div class="read-k">当前拐点</div>
+        <div class="read-v c-cy" id="rp-ridge">164 <small>FLOP/B</small></div>
+        <div class="read-n" id="rp-ridge-n">本页默认口径 = 164</div></div>
+      <div class="read"><div class="read-k">相对默认口径</div>
+        <div class="read-v c-vi" id="rp-rel">1.00×</div>
+        <div class="read-n">默认 = FP16 dense ÷ VRAM</div></div>
+      <div class="read"><div class="read-k">打满算力所需 batch</div>
+        <div class="read-v c-li" id="rp-batch">164</div>
+        <div class="read-n">算术强度 ≈ batch size</div></div>
+      <div class="read"><div class="read-k">7B 单用户还差多远</div>
+        <div class="read-v c-rd" id="rp-gap">164×</div>
+        <div class="read-n">单请求算术强度 ≈ 1</div></div>
+    </div>
+    <div class="verdict mem" id="rp-verdict">
+      <div class="verdict-t" id="rp-vt">■ 结论</div>
+      <p id="rp-vp"></p>
+    </div>
+  </div>
+  <table>
+    <tr><th>算力口径</th><th>4090 峰值</th><th>÷ VRAM 1008 GB/s</th><th>这个口径什么时候用</th></tr>
+    <tr><td>FP32 CUDA 核</td><td class="mono">82.6 TFLOPS</td>
+      <td class="mono" style="color:var(--lime)">82</td><td>不走 tensor core 的通用计算</td></tr>
+    <tr><td>FP16 Tensor · dense</td><td class="mono">165.2 TFLOPS</td>
+      <td class="mono" style="color:var(--cyan)">164</td><td><strong>本页默认</strong>，LLM 推理常态</td></tr>
+    <tr><td>FP16 Tensor · sparse</td><td class="mono">330.3 TFLOPS</td>
+      <td class="mono" style="color:var(--amber)">328</td><td>需 2:4 结构化稀疏，多数模型用不上</td></tr>
+    <tr><td>INT8 Tensor</td><td class="mono">330.3 TOPS</td>
+      <td class="mono" style="color:var(--amber)">328</td><td>int8 量化推理</td></tr>
+  </table>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">拐点是硬件出厂参数，还是推算出来的？</span>
+      <span class="fold-tldr"><b>推算的</b>。没有厂商标这一项，但两个输入都是官方规格，所以客观可复现。</span>
+      <span class="fold-tag">答疑</span>
+    </summary>
+    <div class="fold-body">
+      <h4>它是单位换算，不是新信息</h4>
+      <p>
+        规格表里只有「峰值算力」和「显存带宽」两项，<strong>没有「拐点」这一栏</strong>。
+        拐点是两者相除得到的派生量，本页在模块 08 里把它标为
+        <span class="src-t calc">推导值</span> 而不是
+        <span class="src-t spec">官方规格</span>，就是这个原因。
+      </p>
+      <p>
+        但「推算」不等于「估计」。两个输入都是厂商公布的确定值，
+        所以同样的口径任何人都能算出同一个数，<strong>它是客观的硬件属性</strong>。
+      </p>
+
+      <h4>所以「这张卡的拐点是多少」这个问题不完整</h4>
+      <p>
+        必须补上<strong>哪个精度、数据住哪一层</strong>。上面的矩阵就是在演示这件事：
+        同一张 4090，拐点能从 33 变到 2750，差 80 倍以上。
+      </p>
+
+      <h4>规格推导值 ≠ 实测拐点</h4>
+      <ul class="pts">
+        <li><strong>峰值算力</strong>假设 tensor core 100% 利用并维持 boost 频率，实际跑不满</li>
+        <li><strong>带宽规格</strong>是 <code>位宽 × 引脚速率 ÷ 8</code> 的理论值，
+          实际可达通常只有 <strong>80~90%</strong></li>
+      </ul>
+      <p>
+        按实测值重算，拐点会偏移。做精确调优要用 profiler 实测
+        （如 Nsight Compute 的 roofline 分析），<strong>规格推导值只适合快速估量级</strong>。
+      </p>
+
+      <div class="callout warn">
+        <div class="callout-t">跨卡对比时必须统一口径</div>
+        <p>
+          拿 A 卡的 sparse 算力和 B 卡的 dense 算力去比拐点，结论是假的。
+        </p>
+        <p>
+          这也是模块 08 的换卡对比<strong>只用 dense、不用虚高的 330</strong> 的原因 ——
+          四张卡必须站在同一个口径上才有可比性。
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">为什么数据住在 L2 时拐点会变低？</span>
+      <span class="fold-tldr">分母换成了更快的带宽，<b>同样的算力配更高的供数速度</b>，门槛自然降低。</span>
+      <span class="fold-tag">展开推导</span>
+    </summary>
+    <div class="fold-body">
+      <h4>分层 Roofline</h4>
+      <p>
+        完整的 Roofline 图上不止一条斜线，而是<strong>每层存储各一条</strong>：
+        L2 一条、VRAM 一条、主机内存一条。层越快，斜线越陡，拐点越靠左。
+      </p>
+
+      <h4>实务含义：能不能被缓存住，决定你撞哪面墙</h4>
+      <p>
+        一个在 VRAM 视角下是带宽瓶颈的 kernel，如果做了分块（tiling）让数据驻留 L2，
+        分母从 1008 GB/s 变成 ~5 TB/s，拐点从 164 掉到约 33 ——
+        <strong>同样的算术强度，可能就从带宽瓶颈翻到算力瓶颈了</strong>。
+      </p>
+      <p>
+        这正是 FlashAttention 这类优化的原理：不减少计算量，
+        而是<strong>改变数据在哪一层流动</strong>，把问题挪到更有利的那条屋顶线下面。
+      </p>
+
+      <div class="callout">
+        <div class="callout-t">但对 LLM 权重搬运不适用</div>
+        <p>
+          本页主线讨论的是<strong>权重</strong>从 VRAM 流到计算核心。
+          14 GB 的权重远超 72 MB 的 L2，<strong>不可能被缓存住</strong>，
+          所以单用户解码场景只能用 VRAM 那一条线，拐点就是 164。
+        </p>
+        <p>
+          L2 那条线对 attention 的中间结果有意义，对权重没有。
+        </p>
+      </div>
+    </div>
+  </details>
+</section>
+
+<section class="mod reveal" id="m5">
+  <div class="mod-head"><span class="mod-n">06</span><h2>投机解码：何时加速，何时拖慢</h2></div>
+  <p class="mod-sub">
+    现在把前面的拼图合起来。调整三个参数，重点看<strong>下方的「逐轮回放」</strong> ——
+    它会逐个 token 告诉你哪些猜对了、哪些被丢弃、主模型补了什么，
+    鼠标悬浮任意 token 可以看到它的具体遭遇。
+  </p>
+  <div class="panel">
+    <div class="panel-h">
+      <span class="panel-t">投机解码模拟器</span>
+      <div class="seg" id="sd-preset">
+        <button data-p="local" class="on">本地 · 代码补全</button>
+        <button data-p="creative">本地 · 创意写作</button>
+        <button data-p="cloud">云端 · 大 batch</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <div class="ctl-top">
+        <span class="ctl-l">草稿长度 K
+          <button class="qmk" data-t="sdk" aria-label="什么是草稿长度 K">?</button>
+        </span>
+        <span class="ctl-v" id="sd-k-v">4</span>
+      </div>
+      <input type="range" id="sd-k" min="1" max="10" step="1" value="4">
+      <div class="ctl-hint" id="sd-k-h">一次性猜 <b>4</b> 个 token，然后交给主模型一起验证</div>
+    </div>
+    <div class="ctl">
+      <div class="ctl-top">
+        <span class="ctl-l">接受率 α
+          <button class="qmk" data-t="sda" aria-label="什么是接受率">?</button>
+        </span>
+        <span class="ctl-v" id="sd-a-v">75%</span>
+      </div>
+      <input type="range" id="sd-a" min="10" max="95" step="5" value="75">
+      <div class="ctl-hint" id="sd-a-h">草稿每猜一个，有 <b>75%</b> 概率和主模型的答案一致</div>
+    </div>
+    <div class="ctl">
+      <div class="ctl-top">
+        <span class="ctl-l">Batch size
+          <button class="qmk" data-t="sdb" aria-label="什么是 batch size">?</button>
+        </span>
+        <span class="ctl-v" id="sd-b-v">1</span>
+      </div>
+      <input type="range" id="sd-b" min="0" max="100" step="1" value="0">
+      <div class="ctl-hint" id="sd-b-h">同时处理 <b>1</b> 个请求 · 算力闲置 <b>99.4%</b>，验证几乎免费</div>
+    </div>
+    <div class="spec-lanes">
+      <div class="lane">
+        <div class="lane-h">
+          <span class="lane-n">基线 · 逐 token 解码</span>
+          <span class="lane-m c-cy" id="sd-base-m">8 步 · 111 ms</span>
+        </div>
+        <div class="timeline" id="sd-base-tl"></div>
+      </div>
+      <div class="lane">
+        <div class="lane-h">
+          <span class="lane-n">投机解码 · 草稿 + 并行验证</span>
+          <span class="lane-m c-li" id="sd-spec-m">3 轮 · 47 ms</span>
+        </div>
+        <div class="timeline" id="sd-spec-tl"></div>
+      </div>
+      <div class="tl-lgd">
+        <span>每一格 = 一个步骤 · 格子越宽 = 耗时越长 · 格内数字 = 这一步产出几个 token</span>
+      </div>
+    </div>
+
+    <div class="sd-explain">
+      <div class="sd-ex-h">
+        <span class="panel-t">这些 token 发生了什么 · 逐轮回放</span>
+        <div class="sd-lg">
+          <i><b style="background:oklch(86% 0.17 132/.6)"></b>猜对，保留</i>
+          <i><b style="background:oklch(68% 0.19 22/.6)"></b>猜错，丢弃</i>
+          <i><b style="background:oklch(81% 0.13 205/.6)"></b>主模型补正</i>
+          <i><b style="background:transparent;border:1px dashed var(--line)"></b>没验到</i>
+        </div>
+      </div>
+      <div class="sd-rounds" id="sd-rounds"></div>
+      <div class="sd-narr" id="sd-narr"></div>
+    </div>
+  </div>
+    <div class="reads">
+      <div class="read"><div class="read-k">期望接受长度</div><div class="read-v c-vi" id="sd-r-acc">3.1 <small>tok/轮</small></div>
+        <div class="read-n">含验证后必得的 1 个</div></div>
+      <div class="read"><div class="read-k">单轮成本</div><div class="read-v c-am" id="sd-r-cost">1.15 <small>×单步</small></div>
+        <div class="read-n" id="sd-r-cost-n">草稿 + 验证</div></div>
+      <div class="read"><div class="read-k">加速比</div><div class="read-v" id="sd-r-sp">2.7 <small>×</small></div></div>
+      <div class="read"><div class="read-k">结论</div><div class="read-v" id="sd-r-ver" style="font-size:14px">有效加速</div></div>
+    </div>
+  </div>
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">加速比的公式是怎么来的？</span>
+      <span class="fold-tldr"><b>期望接受长度 ÷ 单轮成本</b>。即使全猜错也产出 1 个，所以从不亏本。</span>
+      <span class="fold-tag">推导</span>
+    </summary>
+    <div class="fold-body">
+      <h4>分子：一轮能白拿几个 token</h4>
+      <p>
+        接受长度服从几何分布，期望值 <code>E = (1-α^(K+1))/(1-α)</code>。
+      </p>
+      <p>
+        注意那个 <code>K+1</code>：即使 K 个草稿<strong>全猜错</strong>，
+        验证这一步本身也会产出 1 个正确 token。所以<strong>从不亏本</strong>，最差是打平。
+      </p>
+
+      <h4>分母：一轮要花多少时间</h4>
+      <p>
+        单轮成本取决于<strong>当前是否带宽瓶颈</strong> —— 这就是前一个模块的 Roofline 位置。
+      </p>
+      <table>
+        <tr><th>场景</th><th>算力状态</th><th>验证 K 个的额外成本</th><th>净效果</th></tr>
+        <tr><td>本地 batch=1</td><td style="color:var(--lime)">99% 闲置</td><td class="mono">≈ 0（搬运量不变）</td>
+          <td style="color:var(--lime)">接近线性加速</td></tr>
+        <tr><td>中等 batch=32</td><td>部分占用</td><td class="mono">小幅上升</td><td>仍有收益</td></tr>
+        <tr><td>云端 batch≥256</td><td style="color:var(--red)">已饱和</td><td class="mono">正比于 K</td>
+          <td style="color:var(--red)">可能净变慢</td></tr>
+      </table>
+      <p>
+        所以同一套参数，在本地是 2.6× 加速，搬到云端大 batch 就变成 0.7×（更慢）。
+        <strong>决定因素不是算法本身，而是你在屋顶的哪一段上。</strong>
+      </p>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>
+      <span class="fold-ar">▸</span>
+      <span class="fold-q">MTP 是什么？和传统投机解码的区别</span>
+      <span class="fold-tldr">把草稿能力<b>做进主模型</b>，省掉独立草稿机，但必须训练时埋入。</span>
+      <span class="fold-tag">扩展</span>
+    </summary>
+    <div class="fold-body">
+      <h4>传统做法的麻烦</h4>
+      <p>
+        要额外养一个小模型当草稿机：<strong>占显存、要对齐词表、部署麻烦</strong>。
+      </p>
+
+      <h4>MTP 的做法</h4>
+      <p>
+        <strong>MTP（Multi-Token Prediction）</strong>在训练时给主模型加几个轻量预测头，
+        让它预测下一个 token 的同时，<strong>顺手预测再往后几步</strong>。
+        推理时主模型自己产出草稿，不需要第二个模型。
+      </p>
+
+      <h4>代价：必须在训练阶段埋入</h4>
+      <p>这个能力<strong>不能事后插件式加装</strong>，所以模型分成了两类：</p>
+      <ul class="pts">
+        <li><strong>原生带 MTP</strong> —— DeepSeek-V3（最早用在生产级大模型）、Qwen3-Next、Gemma 等</li>
+        <li><strong>没有 MTP</strong> —— Llama、Mistral 等，只能走独立草稿模型的老路</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<section class="mod reveal" id="m6">
+  <div class="mod-head"><span class="mod-n">07</span><h2>全景速查</h2></div>
+  <p class="mod-sub">把整条链条压缩成一页，便于回看。</p>
+  <div class="panel">
+    <div class="panel-t" style="margin-bottom:14px">因果链</div>
+    <p style="max-width:none;font-family:var(--f-mono);font-size:12.5px;line-height:2.1;color:var(--ink-dim)">
+      权重太大，只能住 VRAM（计算芯片缓存只有几十 MB）<br>
+      &nbsp;&nbsp;↓<br>
+      每生成 1 个 token 要把全部权重流式搬一遍（自回归，严格串行）<br>
+      &nbsp;&nbsp;↓<br>
+      搬 14 GB 却只算 14 GFLOP → 算术强度 ≈ 1 FLOP/B，远低于拐点 164<br>
+      &nbsp;&nbsp;↓<br>
+      <span style="color:var(--amber)">带宽瓶颈：算力利用率 0.6%，99% 的计算单元在等数据</span><br>
+      &nbsp;&nbsp;↓<br>
+      三条出路 →
+      <span style="color:var(--cyan)">量化</span>（减少搬运量）·
+      <span style="color:var(--lime)">batching</span>（一次搬运服务多人）·
+      <span style="color:var(--violet)">投机解码</span>（一次搬运多出几个 token）<br>
+      &nbsp;&nbsp;↓<br>
+      <span style="color:var(--red)">但 batching 会推高算术强度，越过拐点后算力饱和，投机解码的「免费」前提消失</span>
+    </p>
+  </div>
+  <table>
+    <tr><th>概念</th><th>一句话</th><th>关键数字</th></tr>
+    <tr><td>VRAM</td><td>显存颗粒，模型权重实际住的地方</td><td class="mono">12 / 24 / 80 GB</td></tr>
+    <tr><td>片内缓存</td><td>计算芯片自带，极小，只做临时周转</td><td class="mono">几十 MB</td></tr>
+    <tr><td>显存带宽</td><td>VRAM 到计算核心的物理传输速率上限</td><td class="mono">1008 GB/s</td></tr>
+    <tr><td>FLOP / GFLOP</td><td>工作量，一次浮点运算记 1 FLOP，无时间维度</td><td class="mono">7B 单 token = 14 GFLOP</td></tr>
+    <tr><td>FLOPS / TFLOPS</td><td>运算速度，每秒能做多少次浮点运算</td><td class="mono">165 TFLOPS</td></tr>
+    <tr><td>算术强度</td><td>每搬 1 字节做多少次运算，决定瓶颈在哪边</td><td class="mono">单请求 ≈ 1 FLOP/B</td></tr>
+    <tr><td>Roofline</td><td>把带宽斜线和算力平线画一起，形状像屋顶</td><td class="mono">ACM 2009</td></tr>
+    <tr><td>拐点 ridge point</td><td>峰值算力 ÷ 带宽，瓶颈切换的临界强度</td><td class="mono">164 FLOP/B</td></tr>
+    <tr><td>量化</td><td>降低每个权重的存储精度，同时省显存和带宽</td><td class="mono">int4 = 0.5 B/参数</td></tr>
+    <tr><td>Batching</td><td>一次搬权重服务多请求，线性推高算术强度</td><td class="mono">AI ≈ batch size</td></tr>
+    <tr><td>投机解码</td><td>猜 K 个再并行验证，用闲置算力换搬运次数</td><td class="mono">加速 2-3×</td></tr>
+    <tr><td>MTP</td><td>把草稿能力做进主模型，省掉独立草稿机</td><td class="mono">需训练时埋入</td></tr>
+  </table>
+  <div class="callout">
+    <div class="callout-t">投机解码的甜点区</div>
+    <p>
+      本地部署 + 单用户或小 batch + 确定性强的任务（代码、翻译）+ 模型原生支持 MTP。
+      四个条件齐备时能跑出笔记里那种亮眼数据；缺任何一条，收益都会打折扣。
+    </p>
+  </div>
+</section>
+
+<section class="mod reveal" id="ms">
+  <div class="mod-head"><span class="mod-n">08</span><h2>数据来源：每个数字的出处</h2></div>
+  <p class="mod-sub">
+    本页所有计算都基于一张 <strong>NVIDIA GeForce RTX 4090</strong> 的公开官方规格，不是为了讲解而编造的数字。
+    下面逐条标注来源类型，并提供其他几张常见卡的拐点对照 —— 点一下就能看到换卡后结论怎么变。
+  </p>
+
+  <div class="panel">
+    <div class="panel-h"><span class="panel-t">基准卡参数 · 逐项标注来源</span></div>
+    <table style="margin:0">
+      <tr><th>参数</th><th>本页取值</th><th>来源</th><th>说明</th></tr>
+      <tr><td>显存容量</td><td class="mono">24 GB</td>
+        <td><span class="src-t spec">官方规格</span></td><td>GDDR6X 24GB</td></tr>
+      <tr><td>显存带宽</td><td class="mono">1008 GB/s</td>
+        <td><span class="src-t spec">官方规格</span></td>
+        <td>384-bit × 21 Gbps ÷ 8 = 1008，可自行验算</td></tr>
+      <tr><td>FP16 算力</td><td class="mono">165 TFLOPS</td>
+        <td><span class="src-t spec">官方规格</span></td>
+        <td>官方 165.2，<strong>Tensor Core dense</strong>；带稀疏的 330 本页未采用</td></tr>
+      <tr><td>Roofline 拐点</td><td class="mono">164 FLOP/B</td>
+        <td><span class="src-t calc">推导值</span></td>
+        <td>165e12 ÷ 1008e9，非独立数据。<strong>口径相关</strong>：换精度或存储层会变，见模块 05 的拐点矩阵</td></tr>
+      <tr><td>L2 缓存</td><td class="mono">72 MB</td>
+        <td><span class="src-t spec">官方规格</span></td><td>AD102 架构公开数据</td></tr>
+      <tr><td>主机内存带宽</td><td class="mono">~60 GB/s</td>
+        <td><span class="src-t appr">量级近似</span></td>
+        <td>DDR5-4800 双通道理论 76.8，实测约 60</td></tr>
+      <tr><td>NVMe 带宽</td><td class="mono">~7 GB/s</td>
+        <td><span class="src-t appr">量级近似</span></td>
+        <td>PCIe 4.0 ×4 消费级 SSD 顺序读上限</td></tr>
+      <tr><td>L1 / 寄存器带宽</td><td class="mono">~20 / ~100 TB/s</td>
+        <td><span class="src-t appr">量级近似</span></td>
+        <td>片内带宽无官方标称值，各家实测有差异，取通用教学值</td></tr>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-h">
+      <span class="panel-t">换一张卡：拐点和结论怎么变</span>
+    </div>
+    <div class="gpus" id="s-gpus"></div>
+    <div class="reads" id="s-read" style="margin-top:14px"></div>
+    <div class="verdict mem" id="s-verdict" style="margin-top:14px">
+      <div class="verdict-t" id="s-verdict-t">■ 结论</div>
+      <p id="s-verdict-p"></p>
+    </div>
+  </div>
+
+  <h3>为什么选 4090 做基准</h3>
+  <p>
+    两个理由。一是<strong>可验证</strong>：它是最容易查到官方规格的一张卡，你随手搜一下就能把上面每个数字对上，
+    不需要信任我。二是<strong>拐点位置好讲</strong>：1008 GB/s 配 165 TFLOPS，拐点刚好落在 164，
+    让「batch 要开到一百多才打满算力」这个结论在直觉上非常清晰。
+  </p>
+  <div class="callout warn">
+    <div class="callout-t">数据中心卡其实更「饥饿」</div>
+    <p>
+      一个反直觉的事实：H100 的带宽是 4090 的 3.3 倍，但算力是 6 倍，
+      所以它的<strong>拐点反而更高</strong>（约 295）。这意味着在数据中心卡上，
+      单用户解码浪费的算力比例<strong>比消费卡更夸张</strong>，batching 的收益也更大。
+      这正是云端 API 一定要攒 batch、而不是靠投机解码提速的根本原因。
+    </p>
+  </div>
+  <div class="callout">
+    <div class="callout-t">模型侧数字的来源</div>
+    <p>
+      <code>7B fp16 = 14 GB</code> 来自 <code>7e9 × 2 字节</code>，这是参数量乘精度的直接计算。
+      <code>2 × 参数量 = 单 token FLOP</code> 是业界标准估算（每个权重参与 1 次乘 + 1 次加），
+      忽略了 attention 的 KV 计算、LayerNorm、softmax 等开销 —— 短上下文下误差在 10% 内，
+      长上下文时 attention 项会显著上升，这页的估算不覆盖那种场景。
+    </p>
+    <p>
+      投机解码的 <code>E = (1-α^(K+1))/(1-α)</code> 来自 Leviathan 等人 2023 年的
+      <em>Fast Inference from Transformers via Speculative Decoding</em>，是接受长度的几何分布期望，
+      数学上严格。模块 06 里的「单轮成本」则是我按 Roofline 位置做的<strong>简化模型</strong>，
+      定性趋势可靠（带宽瓶颈时近乎免费、算力饱和时正比于 K），但具体数值不等于实测。
+    </p>
+  </div>
+</section>
+</main>
+
+<div id="tip" role="tooltip"></div>
+
+<button id="askbtn" aria-label="打开答疑面板"><span class="ab-i">?</span>有疑问</button>
+<div id="askmask"></div>
+<aside id="askdrw" role="dialog" aria-label="答疑面板">
+  <div class="ad-h">
+    <div>
+      <div class="ad-h-t">有疑问？</div>
+      <div class="ad-h-s">按阅读时最容易卡住的地方整理。搜不到的，底部可以一键复制提问模板。</div>
+    </div>
+    <button class="ad-x" id="ad-close" aria-label="关闭">×</button>
+  </div>
+  <div class="ad-search">
+    <input type="text" id="ad-input" placeholder="搜关键词：带宽 / 量化 / batch / 拐点…" autocomplete="off">
+  </div>
+  <div class="ad-body" id="ad-body"></div>
+  <div class="ad-foot">
+    <div class="ad-foot-t">没找到想问的？复制一份带上下文的提问模板，贴给任意 AI 都能接着答。</div>
+    <button class="ad-copy" id="ad-copy">复制提问模板（含当前参数）</button>
+  </div>
+</aside>
+<script>
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const BW=1008,PEAK=165e3,RIDGE=PEAK/BW; // GB/s, GFLOPS, FLOP/Byte
+
+/* ===== 滚动揭示 + 导航高亮 ===== */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});
+$$('.reveal').forEach(el=>io.observe(el));
+const navIO=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){
+    $$('.nav-item').forEach(n=>n.classList.toggle('on',n.getAttribute('href')==='#'+e.target.id));
+  }
+}),{threshold:.2,rootMargin:'-20% 0px -60% 0px'});
+$$('section.mod').forEach(s=>navIO.observe(s));
+
+/* ===== 悬浮提示：术语 + 参数 ? ===== */
+const TIPS={
+  vram:{t:'VRAM 显存',b:'显卡上<b>独立的存储颗粒</b>，物理上焊在计算芯片旁边。规格表里写的 12GB / 24GB / 80GB 就是它。模型权重全部住在这里。',
+    r:'4090：<b>24 GB</b> GDDR6X'},
+  bw:{t:'显存带宽',b:'VRAM 到计算核心那条物理连线的<b>传输速率上限</b>。和网络、和「是不是本机」都无关——同一张卡内部搬数据也要花时间。',
+    r:'4090：<b>1008 GB/s</b> = 384bit × 21Gbps ÷ 8'},
+  ai:{t:'算术强度 Arithmetic Intensity',b:'每搬 <b>1 个字节</b>，配套做多少次浮点运算。它只描述工作负载的「形状」，<b>不含时间维度</b>。和硬件拐点一比大小，瓶颈归属立刻确定。',
+    r:'单用户解码 ≈ <b>1 FLOP/B</b> · 拐点 164'},
+  flop:{t:'FLOP · 工作量',b:'一次浮点运算记 1 FLOP。这是<b>总量</b>，不含时间，相当于「这趟要搬 10 吨货」。<br>7B 模型解码 1 个 token = <b>2 × 7e9 = 14 GFLOP</b>（每个参数 1 乘 1 加）。',
+    r:'G = 10⁹ · T = 10¹²'},
+  tflops:{t:'TFLOPS · 速度',b:'每秒能做多少万亿次浮点运算。带「<b>Per Second</b>」，是速度，相当于「这车每小时能搬 5 吨」。<br>注意和小写 s 的 FLOPs（工作量）区分。',
+    r:'4090 FP16 dense：<b>165 TFLOPS</b>'},
+  prec:{t:'数值精度',b:'每个权重用<b>几个字节</b>存。字节越少，模型越小、搬得越快，但能表示的数值档位越少。<br>几十亿个参数会把单点误差平均掉，所以 int8 基本无损、int4 多数场景可用。',
+    r:'fp16=2B · int8=1B · int4=0.5B'},
+  batch:{t:'Batch size',b:'同时处理<b>多少个请求</b>。关键在于：一次搬进来的权重可以同时服务所有请求——<b>搬运量不变，计算量翻倍</b>。<br>所以算术强度 ≈ batch size，这个滑块等于在 Roofline 屋顶上左右移动。',
+    r:'打满 4090 算力需要 batch ≈ <b>164</b>'},
+  sdk:{t:'草稿长度 K',b:'草稿模型<b>一次性猜几个</b> token，然后主模型并行验证这 K 个。<br>K 越大，猜对时白赚越多；但猜错时浪费的草稿也越多，且算力饱和时验证成本正比于 K。',
+    r:'常用 <b>K = 4 ~ 6</b>'},
+  sda:{t:'接受率 α',b:'草稿每猜一个 token，有多大概率<b>和主模型的答案一致</b>。<br>任务确定性越强越高：代码补全、翻译可达 70~80%；创意写作只有 30% 左右。',
+    r:'代码 ≈ 75% · 创作 ≈ 30%'},
+  sdb:{t:'Batch size',b:'决定投机解码<b>是否免费</b>的那个变量。<br>batch 小 → 算力闲置 → 并行验证 K 个几乎不额外花时间；<br>batch 大 → 算力饱和 → 验证成本正比于 K，可能净变慢。',
+    r:'拐点 <b>164</b>，越过就开始收费'},
+  peakkind:{t:'算力口径',b:'同一张卡的「峰值算力」有多个数，取决于<b>用哪种计算单元、什么精度</b>。<br>规格表会同时列出 FP32、FP16 tensor、INT8 等多项，<b>数值能差 4 倍</b>。<br>选错口径，算出的拐点就是错的。',
+    r:'4090：82.6 / 165.2 / 330.3 TFLOPS'},
+  bwlevel:{t:'数据住在哪一层',b:'拐点的分母是<b>数据实际流经的那条通路的带宽</b>，不一定是显存带宽。<br>如果数据能驻留在 L2，分母就换成 L2 带宽，拐点大幅降低。<br>这就是<b>分层 Roofline</b>。',
+    r:'L2 ~5 TB/s · VRAM 1008 GB/s'}
+};
+const tipEl=$('#tip');let tipHide=null;
+function showTip(el,key){
+  const d=TIPS[key];if(!d)return;
+  clearTimeout(tipHide);
+  tipEl.innerHTML=`<div class="tip-t">${d.t}</div><div class="tip-b">${d.b}</div>`+
+    (d.r?`<div class="tip-r">${d.r}</div>`:'');
+  tipEl.classList.add('show');
+  // 先显示再测量，避免 0 宽
+  const r=el.getBoundingClientRect(),tr=tipEl.getBoundingClientRect();
+  let x=r.left+r.width/2-tr.width/2;
+  x=Math.max(10,Math.min(x,innerWidth-tr.width-10));
+  let y=r.top-tr.height-10;
+  if(y<10)y=r.bottom+10;                       // 上方放不下就翻到下方
+  tipEl.style.left=x+'px';tipEl.style.top=y+'px';
+}
+function hideTip(){tipHide=setTimeout(()=>tipEl.classList.remove('show'),90)}
+function bindTips(root){
+  (root||document).querySelectorAll('[data-t]').forEach(el=>{
+    if(el.dataset.tipBound)return;el.dataset.tipBound='1';
+    const k=el.dataset.t;
+    el.addEventListener('mouseenter',()=>showTip(el,k));
+    el.addEventListener('mouseleave',hideTip);
+    el.addEventListener('focus',()=>showTip(el,k));
+    el.addEventListener('blur',hideTip);
+    // 触屏：点一下切换
+    el.addEventListener('click',e=>{
+      e.preventDefault();
+      tipEl.classList.contains('show')?tipEl.classList.remove('show'):showTip(el,k);
+    });
+  });
+}
+bindTips();
+addEventListener('scroll',()=>tipEl.classList.remove('show'),{passive:true});
+
+/* ===== M1 存储层级 ===== */
+const LAYERS=[
+  {n:'寄存器',s:'register',cap:.0002,bw:'~100 TB/s',bwN:1,note:'每个线程私有，纳秒级'},
+  {n:'L1 / 共享内存',s:'L1 / SMEM',cap:.0002,bw:'~20 TB/s',bwN:.85,note:'单个 SM 内部，128 KB 级'},
+  {n:'L2 缓存',s:'L2 cache',cap:.072,bw:'~5 TB/s',bwN:.6,note:'全芯片共享，72 MB'},
+  {n:'VRAM 显存',s:'GDDR6X',cap:24,bw:'1008 GB/s',bwN:.32,note:'权重住这里 · 独立颗粒'},
+  {n:'主机内存',s:'host DDR5',cap:128,bw:'~60 GB/s',bwN:.12,note:'过 PCIe，慢 16 倍'},
+  {n:'NVMe SSD',s:'disk',cap:2048,bw:'~7 GB/s',bwN:.04,note:'兜底，慢 140 倍'}
+];
+let hierPick=3,modelGB=14;
+function renderHier(){
+  $('#hier').innerHTML=LAYERS.map((l,i)=>{
+    const w=Math.max(8,Math.min(100,(Math.log10(l.cap*1024)+2.2)/5.6*100));
+    const fits=modelGB>0&&l.cap>=modelGB;
+    const col=`oklch(${42+l.bwN*42}% ${.05+l.bwN*.1} ${232-l.bwN*28})`;
+    return `<div class="hl ${i===hierPick?'on':''}" data-i="${i}">
+      <div class="hl-name">${l.n}<small>${l.s}</small></div>
+      <div class="hl-bar-wrap">
+        <div class="hl-bar" style="width:${w}%;background:${col}"><span>${fmtCap(l.cap)}</span></div>
+        <div class="hl-meta">${l.bw}${fits?' <span style="color:var(--lime)">&#10003; 装得下</span>':(modelGB>0?' <span style="color:var(--red)">&#10007;</span>':'')}</div>
+      </div></div>`;
+  }).join('');
+  $$('#hier .hl').forEach(el=>el.onclick=()=>{hierPick=+el.dataset.i;renderHier()});
+  const l=LAYERS[hierPick];
+  const ratio=modelGB>0?(l.cap/modelGB):0;
+  $('#hier-read').innerHTML=`
+    <div class="read"><div class="read-k">选中层</div><div class="read-v c-cy" style="font-size:15px">${l.n}</div>
+      <div class="read-n">${l.note}</div></div>
+    <div class="read"><div class="read-k">容量</div><div class="read-v c-li">${fmtCap(l.cap)}</div></div>
+    <div class="read"><div class="read-k">带宽</div><div class="read-v c-am" style="font-size:16px">${l.bw}</div></div>
+    <div class="read"><div class="read-k">能否装下 ${modelGB>0?modelGB+'GB 模型':'—'}</div>
+      <div class="read-v ${modelGB===0?'':(ratio>=1?'c-li':'c-rd')}" style="font-size:15px">
+        ${modelGB===0?'—':(ratio>=1?'装得下':'差 '+(modelGB-l.cap).toFixed(1)+' GB')}</div>
+      <div class="read-n">${modelGB===0?'':(ratio>=1?'余量 '+(l.cap-modelGB).toFixed(1)+' GB':'需量化或多卡')}</div></div>`;
+}
+function fmtCap(gb){
+  if(gb<.001)return (gb*1024*1024).toFixed(0)+' KB';
+  if(gb<1)return (gb*1024).toFixed(0)+' MB';
+  if(gb>=1024)return (gb/1024).toFixed(1)+' TB';
+  return gb+' GB';
+}
+$$('.mk').forEach(b=>b.onclick=()=>{
+  $$('.mk').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  modelGB=+b.dataset.gb;renderHier();
+});
+renderHier();
+
+/* ===== M2 token 旅程 ===== */
+const NL=32,NC=60;
+$('#m2-layers').innerHTML=Array.from({length:NL},()=>'<div class="lcell"></div>').join('');
+$('#m2-cores').innerHTML=Array.from({length:NC},()=>'<div class="core"></div>').join('');
+const m2L=$$('#m2-layers .lcell'),m2C=$$('#m2-cores .core');
+let m2T=null,m2Speed=1,m2Layer=0,m2Tok=0,m2Pkts=[];
+const TOKS=['大','模','型','推','理','的','瓶','颈','在','显','存','带','宽'];
+function m2Reset(){
+  clearInterval(m2T);m2T=null;$('#m2-play').textContent='▶ 播放';
+  m2Layer=0;m2Tok=0;m2Pkts=[];
+  m2L.forEach(c=>c.className='lcell');m2C.forEach(c=>c.className='core');
+  $('#m2-track').innerHTML='';$('#m2-tokens').innerHTML='';
+  $('#m2-vram-n').textContent='0 / 32';$('#m2-core-n').textContent='空闲';
+  setUtil(0,0);$('#m2-r-tok').innerHTML='0 <small>token</small>';
+  $('#m2-r-byte').innerHTML='0 <small>GB</small>';$('#m2-r-flop').innerHTML='0 <small>GFLOP</small>';
+}
+function setUtil(bw,cp){
+  $('#m2-bw-f').style.width=bw+'%';$('#m2-bw-v').textContent=bw.toFixed(0)+'%';
+  $('#m2-cp-f').style.width=Math.max(cp,.4)+'%';$('#m2-cp-v').textContent=cp<1?cp.toFixed(1)+'%':cp.toFixed(0)+'%';
+}
+function m2Tick(){
+  // 清掉上一层标记
+  if(m2Layer>0)m2L[m2Layer-1].className='lcell done';
+  if(m2Layer>=NL){ // 一轮结束 → 出一个 token
+    m2Tok++;
+    const t=document.createElement('span');t.className='tok';
+    t.textContent=TOKS[(m2Tok-1)%TOKS.length];$('#m2-tokens').appendChild(t);
+    $('#m2-r-tok').innerHTML=m2Tok+' <small>token</small>';
+    $('#m2-r-byte').innerHTML=(m2Tok*14).toFixed(0)+' <small>GB</small>';
+    $('#m2-r-flop').innerHTML=(m2Tok*14).toFixed(0)+' <small>GFLOP</small>';
+    m2Layer=0;m2L.forEach(c=>c.className='lcell');
+    if(m2Tok>=6){m2Reset();return}
+  }
+  m2L[m2Layer].className='lcell moving';
+  $('#m2-vram-n').textContent=(m2Layer+1)+' / 32';
+  // 管道里加一个包
+  const p=document.createElement('div');p.className='pkt';
+  p.style.top=(12+Math.random()*58)+'%';p.style.left='-12px';
+  $('#m2-track').appendChild(p);m2Pkts.push({el:p,x:-12});
+  // 核心：只有极少数在忙
+  m2C.forEach((c,i)=>c.className='core'+(i<2&&Math.random()>.35?' busy':''));
+  $('#m2-core-n').textContent='2 / 60 忙';
+  setUtil(97+Math.random()*3,.6);
+  m2Layer++;
+}
+function m2Anim(){
+  m2Pkts=m2Pkts.filter(p=>{
+    p.x+=3.4*m2Speed;p.el.style.left=p.x+'px';
+    const w=$('#m2-track').clientWidth;
+    if(p.x>w){p.el.remove();return false}
+    return true;
+  });
+  requestAnimationFrame(m2Anim);
+}
+requestAnimationFrame(m2Anim);
+$('#m2-play').onclick=()=>{
+  if(m2T){clearInterval(m2T);m2T=null;$('#m2-play').textContent='▶ 播放';}
+  else{m2T=setInterval(m2Tick,80/m2Speed);$('#m2-play').textContent='⏸ 暂停';}
+};
+$('#m2-reset').onclick=m2Reset;
+$$('#m2-speed button').forEach(b=>b.onclick=()=>{
+  $$('#m2-speed button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  m2Speed=+b.dataset.s;
+  if(m2T){clearInterval(m2T);m2T=setInterval(m2Tick,80/m2Speed)}
+});
+
+/* ===== M3 量化 ===== */
+const PRECS=[
+  {n:'fp32',b:4,lv:4.3e9,note:'训练用精度，推理极少用',h:'每个权重用 <b>4 字节</b>存储 · 训练精度，推理几乎不用'},
+  {n:'fp16',b:2,lv:65536,note:'fp16 有 6.5 万档，肉眼看不出和原始值的差别。',h:'每个权重用 <b>2 字节</b>存储 · 推理默认精度'},
+  {n:'int8',b:1,lv:256,note:'256 档已足够表达权重分布，实测几乎无损。',h:'每个权重用 <b>1 字节</b>存储 · 体积减半，实测<b>几乎无损</b>'},
+  {n:'int4',b:.5,lv:16,note:'只剩 16 档，单个权重误差变大，但几十亿参数平均后多数任务仍可用。',h:'每个权重用 <b>半个字节</b> · 体积 1/4，<b>本地部署主力</b>'},
+  {n:'int2',b:.25,lv:4,note:'仅 4 档，权重结构被严重破坏，质量明显下降。',h:'每个权重只剩 <b>2 比特</b> · 实验性，<b>质量明显下降</b>'}
+];
+let qP=1,qB=7,qV=24;
+const W_BASE=Array.from({length:160},()=>Math.random()*2-1);
+function renderQ(){
+  const p=PRECS[qP],size=qB*p.b;
+  $('#q-prec').textContent=`${p.n} · ${p.b} 字节/参数`;
+  $('#q-hint').innerHTML=p.h;
+  $('#q-size').innerHTML=size.toFixed(2).replace(/\.?0+$/,'')+' <small>GB</small>';
+  $('#q-size-n').textContent=`${qB}e9 × ${p.b} 字节`;
+  const ms=size/BW*1000,tps=1000/ms;
+  $('#q-tps').innerHTML=tps.toFixed(0)+' <small>tok/s</small>';
+  $('#q-tps-n').textContent=`单步 ${ms.toFixed(1)} ms`;
+  const pct=size/qV*100,over=pct>100;
+  $('#q-fill').style.width=Math.min(pct,100)+'%';
+  $('#q-fill').style.background=over?'var(--red)':(pct>80?'var(--amber)':'var(--lime)');
+  $('#q-fill-t').textContent=over?'':`${size.toFixed(1)} / ${qV} GB · ${pct.toFixed(0)}%`;
+  $('#q-over').style.display=over?'grid':'none';
+  $('#q-levels').textContent=p.lv>1e6?p.lv.toExponential(1):p.lv;
+  $('#q-fid-note').textContent=p.note;
+  // 权重热图：按档位量化
+  const step=2/p.lv;
+  $('#q-wgrid').innerHTML=W_BASE.map(v=>{
+    const q=p.lv>1e5?v:Math.round(v/step)*step;
+    const l=50+q*34,h=q>0?205:22;
+    return `<div class="wc" style="background:oklch(${l}% ${.04+Math.abs(q)*.12} ${h})"></div>`;
+  }).join('');
+  // 档位条
+  const n=Math.min(p.lv,24);
+  $('#q-numline').innerHTML=Array.from({length:n},(_,i)=>
+    `<div class="nbar" style="height:${20+Math.sin(i/n*Math.PI)*80}%"></div>`).join('');
+}
+$('#q-slider').oninput=e=>{qP=+e.target.value;renderQ()};
+$$('#q-model button').forEach(b=>b.onclick=()=>{
+  $$('#q-model button').forEach(x=>x.classList.remove('on'));b.classList.add('on');qB=+b.dataset.b;renderQ()});
+$$('#q-gpu button').forEach(b=>b.onclick=()=>{
+  $$('#q-gpu button').forEach(x=>x.classList.remove('on'));b.classList.add('on');qV=+b.dataset.v;renderQ()});
+renderQ();
+
+/* ===== M4 Roofline ===== */
+const cv=$('#rf-canvas'),cx=cv.getContext('2d');
+let rfBS=1;
+const sl2bs=v=>Math.round(Math.pow(10,v/100*3)); // 1 → 1000
+const bs2sl=b=>Math.log10(b)/3*100;
+// 按设备像素比重设 backing store，避免 retina 上发虚
+// 逻辑坐标系在窄屏上收窄，否则 10px 字号被缩到 4px 不可读
+let LW=760,LH=470;
+function fitCanvas(){
+  const dpr=Math.min(window.devicePixelRatio||1,2.5);
+  const cssW=cv.parentElement.clientWidth||760;
+  LW=Math.max(330,Math.min(760,cssW));
+  LH=Math.max(312,Math.round(LW*470/760));
+  const cssH=cssW*LH/LW;
+  cv.style.height=cssH+'px';
+  cv.width=Math.round(cssW*dpr);
+  cv.height=Math.round(cssH*dpr);
+  // 统一映射到 LW×LH 逻辑坐标系，绘图代码无需改动
+  const k=cv.width/LW;
+  cx.setTransform(k,0,0,k,0,0);
+}
+function drawRoofline(){
+  const W=LW,H=LH,narrow=LW<470,P={l:narrow?48:62,r:narrow?14:22,t:26,b:46};
+  const gw=W-P.l-P.r,gh=H-P.t-P.b;
+  cx.clearRect(0,0,W,H);
+  const xMin=Math.log10(.3),xMax=Math.log10(3000);
+  const yMin=Math.log10(.5),yMax=Math.log10(400);
+  const X=ai=>P.l+(Math.log10(ai)-xMin)/(xMax-xMin)*gw;
+  const Y=tf=>P.t+gh-(Math.log10(tf)-yMin)/(yMax-yMin)*gh;
+  // 网格
+  const FS=narrow?11:10;
+  cx.strokeStyle='oklch(25% 0.025 252)';cx.lineWidth=1;cx.font=FS+'px JetBrains Mono, monospace';
+  cx.fillStyle='oklch(54% 0.025 245)';
+  [1,10,100,1000].forEach(v=>{
+    cx.beginPath();cx.moveTo(X(v),P.t);cx.lineTo(X(v),P.t+gh);cx.stroke();
+    cx.textAlign='center';cx.fillText(v,X(v),P.t+gh+17);
+  });
+  [1,10,100].forEach(v=>{
+    cx.beginPath();cx.moveTo(P.l,Y(v));cx.lineTo(P.l+gw,Y(v));cx.stroke();
+    cx.textAlign='right';cx.fillText(v,P.l-9,Y(v)+3.5);
+  });
+  cx.textAlign='center';cx.fillStyle='oklch(54% 0.025 245)';cx.font=FS+'px JetBrains Mono, monospace';
+  cx.fillText(narrow?'算术强度 FLOP/B':'算术强度  FLOP / Byte',P.l+gw/2,H-9);
+  cx.save();cx.translate(15,P.t+gh/2);cx.rotate(-Math.PI/2);
+  cx.fillText(narrow?'算力 TFLOPS':'达成算力  TFLOPS',0,0);cx.restore();
+  // 屋顶线
+  cx.lineWidth=2.4;
+  cx.strokeStyle='oklch(82% 0.15 72)';cx.beginPath();
+  cx.moveTo(X(.3),Y(.3*BW/1000));cx.lineTo(X(RIDGE),Y(PEAK/1000));cx.stroke();
+  cx.strokeStyle='oklch(68% 0.19 22)';cx.beginPath();
+  cx.moveTo(X(RIDGE),Y(PEAK/1000));cx.lineTo(X(3000),Y(PEAK/1000));cx.stroke();
+  // 标注
+  cx.font='600 '+(narrow?11:10.5)+'px JetBrains Mono, monospace';
+  cx.fillStyle='oklch(82% 0.15 72)';cx.textAlign='left';
+  cx.save();cx.translate(X(1.1),Y(1.5));cx.rotate(-.70);
+  cx.fillText(narrow?'带宽屋顶':'带宽屋顶 1008 GB/s',0,0);cx.restore();
+  cx.fillStyle='oklch(68% 0.19 22)';
+  cx.textAlign=narrow?'right':'left';
+  cx.fillText(narrow?'算力屋顶':'算力屋顶 165 TFLOPS',narrow?X(2600):X(260),Y(PEAK/1000)-9);
+  // 拐点
+  cx.strokeStyle='oklch(81% 0.13 205/.45)';cx.lineWidth=1;cx.setLineDash([4,4]);
+  cx.beginPath();cx.moveTo(X(RIDGE),P.t+gh);cx.lineTo(X(RIDGE),Y(PEAK/1000));cx.stroke();cx.setLineDash([]);
+  cx.fillStyle='oklch(81% 0.13 205)';cx.textAlign='center';
+  cx.fillText('拐点 164',X(RIDGE),P.t+gh-7);
+  // 区域底色标签
+  cx.font=(narrow?10:11)+'px "Noto Sans SC", sans-serif';
+  cx.textAlign='center';
+  cx.fillStyle='oklch(82% 0.15 72/.5)';cx.fillText('带宽瓶颈区',X(narrow?2.4:3.2),P.t+17);
+  cx.fillStyle='oklch(68% 0.19 22/.5)';cx.fillText('算力瓶颈区',X(760),P.t+17);
+  // 当前点：AI ≈ batch size（单请求 ≈1）
+  const ai=rfBS,perf=Math.min(ai*BW/1000,PEAK/1000);
+  const px=X(ai),py=Y(perf);
+  cx.beginPath();cx.arc(px,py,16,0,7);cx.fillStyle='oklch(81% 0.13 205/.14)';cx.fill();
+  cx.beginPath();cx.arc(px,py,6.5,0,7);
+  cx.fillStyle=ai<RIDGE?'oklch(82% 0.15 72)':'oklch(68% 0.19 22)';cx.fill();
+  cx.strokeStyle='oklch(95% 0.01 250)';cx.lineWidth=2;cx.stroke();
+  cx.font='700 '+(narrow?11.5:11)+'px JetBrains Mono, monospace';cx.fillStyle='oklch(94% 0.008 250)';
+  cx.textAlign=ai>100?'right':'left';
+  cx.fillText(`batch=${rfBS}`,px+(ai>100?-15:15),py-10);
+  cx.font=FS+'px JetBrains Mono, monospace';cx.fillStyle='oklch(72% 0.022 245)';
+  cx.fillText(`${perf.toFixed(1)} TFLOPS`,px+(ai>100?-15:15),py+5);
+  // 读数
+  const util=perf/(PEAK/1000)*100;
+  const memBound=ai<RIDGE;
+  const stepMs=memBound?14/BW*1000:14*rfBS/PEAK*1000;
+  const thru=rfBS/stepMs*1000;
+  $('#rf-hint').innerHTML=`同时处理 <b>${rfBS}</b> 个请求 · 算术强度 <b>${ai.toFixed(ai<10?1:0)}</b>，`+
+    (memBound
+      ? `在拐点 164 <b>左侧</b>，还有 <b>${(100-util).toFixed(0)}%</b> 算力闲着`
+      : `已越过拐点 164，算力<b>打满</b>，再加 batch 吞吐不再涨`);
+  $('#rf-ai').innerHTML=ai.toFixed(ai<10?1:0)+' <small>F/B</small>';
+  $('#rf-perf').innerHTML=perf.toFixed(perf<10?1:0)+' <small>TFLOPS</small>';
+  $('#rf-util').innerHTML=(util<1?util.toFixed(1):util.toFixed(0))+'%';
+  $('#rf-util').className='read-v '+(util<10?'c-rd':util<60?'c-am':'c-li');
+  $('#rf-bwu').innerHTML=(memBound?100:(RIDGE/ai*100)).toFixed(0)+'%';
+  $('#rf-step').innerHTML=stepMs.toFixed(1)+' <small>ms</small>';
+  $('#rf-thru').innerHTML=thru>9999?(thru/1000).toFixed(1)+'k <small>tok/s</small>':thru.toFixed(0)+' <small>tok/s</small>';
+  $('#rf-thru-n').textContent=`每请求 ${(1000/stepMs).toFixed(0)} tok/s`;
+  const v=$('#rf-verdict');
+  if(memBound){
+    v.className='verdict mem';$('#rf-verdict-t').textContent='■ 带宽瓶颈';
+    $('#rf-verdict-p').innerHTML=`算术强度 ${ai.toFixed(1)} 低于拐点 164，GPU 大部分时间在等权重搬进来。
+      算力只用了 <strong>${util<1?util.toFixed(1):util.toFixed(0)}%</strong> —— 有 ${(100-util).toFixed(0)}% 的算力闲置，
+      <strong style="color:var(--lime)">投机解码可以几乎免费地利用这部分闲置</strong>。`;
+  }else{
+    v.className='verdict comp';$('#rf-verdict-t').textContent='■ 算力瓶颈';
+    $('#rf-verdict-p').innerHTML=`算术强度 ${ai.toFixed(0)} 已越过拐点 164，算力被打满（<strong>${util.toFixed(0)}%</strong>）。
+      此时<strong style="color:var(--red)">任何额外计算都要付真实时间代价</strong>，
+      投机解码的草稿与验证开销不再免费，净效果可能是变慢。`;
+  }
+}
+$('#rf-slider').oninput=e=>{
+  rfBS=sl2bs(+e.target.value);$('#rf-bs').textContent=rfBS;
+  $$('#rf-preset button').forEach(x=>x.classList.remove('on'));
+  drawRoofline();
+};
+$$('#rf-preset button').forEach(b=>b.onclick=()=>{
+  $$('#rf-preset button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  rfBS=+b.dataset.b;$('#rf-bs').textContent=rfBS;$('#rf-slider').value=bs2sl(rfBS);drawRoofline();
+});
+fitCanvas();drawRoofline();
+
+/* ===== M4 拐点矩阵：分子换精度 · 分母换存储层级 ===== */
+// 分子：4090 各口径峰值算力（官方规格，单位 GFLOP/s）
+const RP_NUM=[
+  {n:'FP32 CUDA 核',v:82.6e3,note:'不走 tensor core 的通用计算路径'},
+  {n:'FP16 Tensor · dense',v:165.2e3,note:'本页默认口径 · LLM 推理常态'},
+  {n:'FP16 Tensor · sparse',v:330.3e3,note:'需 2:4 结构化稀疏，多数模型用不上'},
+  {n:'INT8 Tensor',v:330.3e3,note:'int8 量化推理，单位严格说是 TOPS'}
+];
+// 分母：各层带宽（GB/s）。L2 与主机内存为量级近似
+const RP_DEN=[
+  {n:'L2 缓存',v:5000,cap:'72 MB',appr:true,note:'数据要能被分块驻留才适用'},
+  {n:'VRAM',v:1008,cap:'24 GB',appr:false,note:'权重搬运走这条，本页默认'},
+  {n:'主机内存',v:60,cap:'128 GB',appr:true,note:'过 PCIe，offload 场景'}
+];
+// 带宽显示：只有整数倍 TB 级才换算，避免 1008 GB/s 被写成「1 TB/s」
+const rpBW=b=>(b.appr?'~':'')+(b.v>=2000?(b.v/1000).toFixed(1)+' TB/s':b.v+' GB/s');
+const RP_DEFAULT=165.2e3/1008;   // 默认口径拐点 ≈ 164
+let rpN=1,rpD=1;
+function renderRP(){
+  const a=RP_NUM[rpN],b=RP_DEN[rpD];
+  const ridge=a.v/b.v;                       // GFLOP/s ÷ GB/s = FLOP/Byte
+  const rel=ridge/RP_DEFAULT;
+  const isDefault=(rpN===1&&rpD===1);
+
+  $('#rp-num-h').innerHTML=`${a.n} · 峰值 <b>${(a.v/1e3).toFixed(1)} T${rpN===3?'OPS':'FLOPS'}</b> · ${a.note}`;
+  $('#rp-den-h').innerHTML=`${b.n} · 容量 <b>${b.cap}</b> · 带宽 <b>${rpBW(b)}</b> · ${b.note}`;
+
+  $('#rp-eq').innerHTML=
+    `<i>${(a.v/1e3).toFixed(1)} T${rpN===3?'OPS':'FLOPS'}</i>
+     &nbsp;÷&nbsp; <i>${rpBW(b)}</i>
+     &nbsp;=&nbsp; <b>${ridge<10?ridge.toFixed(1):ridge.toFixed(0)} FLOP/Byte</b><br>
+     <span style="font-size:11px;color:var(--ink-faint)">
+       ${(a.v*1e9).toExponential(2)} FLOP/s ÷ ${(b.v*1e9).toExponential(2)} Byte/s
+       &nbsp;·&nbsp; 两个输入都是规格值，相除即得
+     </span>`;
+
+  $('#rp-ridge').innerHTML=(ridge<10?ridge.toFixed(1):ridge.toFixed(0))+' <small>FLOP/B</small>';
+  $('#rp-ridge-n').textContent=isDefault?'本页默认口径 = 164':`默认口径为 164，当前换了${rpN!==1?'精度':''}${(rpN!==1&&rpD!==1)?'和':''}${rpD!==1?'存储层':''}`;
+  $('#rp-rel').textContent=(rel<10?rel.toFixed(2):rel.toFixed(0))+'×';
+  $('#rp-rel').className='read-v '+(rel>1.5?'c-am':rel<0.7?'c-li':'c-vi');
+  $('#rp-batch').textContent=ridge<10?ridge.toFixed(1):ridge.toFixed(0);
+  $('#rp-gap').textContent=(ridge<10?ridge.toFixed(1):ridge.toFixed(0))+'×';
+
+  const v=$('#rp-verdict');
+  if(rpD===0){
+    v.className='verdict comp';$('#rp-vt').textContent='■ 分母变快 → 门槛变低';
+    $('#rp-vp').innerHTML=`数据若能驻留 L2（~5 TB/s），拐点降到 <strong>${ridge.toFixed(0)}</strong>，
+      只有默认口径的 <strong>${rel.toFixed(2)}×</strong>。
+      <strong style="color:var(--lime)">同样的算术强度，在这条线下可能已经是算力瓶颈了</strong> ——
+      这就是 FlashAttention 这类优化的思路：不减少计算，而是改变数据在哪一层流动。<br>
+      但注意：<strong>14 GB 的权重装不进 72 MB 的 L2</strong>，本页主线的权重搬运用不上这条。`;
+  }else if(rpD===2){
+    v.className='verdict comp';$('#rp-vt').textContent='■ 分母变慢 → 门槛暴涨';
+    $('#rp-vp').innerHTML=`走主机内存（~60 GB/s）时拐点飙到 <strong>${ridge.toFixed(0)}</strong>，
+      是默认口径的 <strong>${rel.toFixed(0)}×</strong>。
+      <strong style="color:var(--red)">几乎不可能达到</strong>，意味着一旦权重要从主机内存 offload 进来，
+      就会被死死钉在带宽瓶颈上 —— 这是分层 offload 方案的主要代价。`;
+  }else if(rpN===2||rpN===3){
+    v.className='verdict comp';$('#rp-vt').textContent='■ 分子变大 → 门槛变高';
+    $('#rp-vp').innerHTML=`${a.n} 的峰值是 dense FP16 的 2 倍，拐点也翻倍到 <strong>${ridge.toFixed(0)}</strong>。
+      <strong style="color:var(--amber)">算力越强，喂饱它需要的算术强度越高</strong>。<br>
+      ${rpN===2?'但 sparse 需要模型做 2:4 结构化剪枝，多数 LLM 不满足 —— 用它算拐点会高估硬件的实际门槛。'
+               :'int8 量化同时把搬运量减半，所以实际收益要两头一起算，不能只看拐点变高。'}`;
+  }else if(rpN===0){
+    v.className='verdict mem';$('#rp-vt').textContent='■ 不走 Tensor Core';
+    $('#rp-vp').innerHTML=`普通 CUDA 核的 FP32 峰值只有 82.6 TFLOPS，拐点 <strong>${ridge.toFixed(0)}</strong>，
+      是默认口径的 <strong>${rel.toFixed(2)}×</strong>。
+      矩阵乘如果没走 tensor core，<strong>门槛更低但天花板也更低</strong> ——
+      拐点低不代表性能好，只代表这条路本来就跑不快。`;
+  }else{
+    v.className='verdict mem';$('#rp-vt').textContent='■ 本页默认口径';
+    $('#rp-vp').innerHTML=`FP16 dense tensor core ÷ VRAM 带宽 = <strong>164 FLOP/Byte</strong>，
+      这是 LLM 权重搬运的真实场景，也是前面所有结论用的那个数。
+      <strong>换任意一个口径，这个数都会变</strong> —— 所以引用拐点时必须说清口径。`;
+  }
+}
+$$('#rp-num button').forEach(b=>b.onclick=()=>{
+  $$('#rp-num button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  rpN=+b.dataset.i;renderRP();
+});
+$$('#rp-den button').forEach(b=>b.onclick=()=>{
+  $$('#rp-den button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  rpD=+b.dataset.i;renderRP();
+});
+renderRP();
+let rfRz;
+addEventListener('resize',()=>{clearTimeout(rfRz);rfRz=setTimeout(()=>{fitCanvas();drawRoofline()},140)});
+
+/* ===== M5 投机解码 ===== */
+let sdK=4,sdA=.75,sdB=1;
+// 一句自然的代码：这是「正确答案」，主模型最终会产出的序列
+const SD_TOK=['const','result','=','await','fetch','(','url',')',';','return','result','.','json','(',')'];
+// 草稿猜错时吐出的词：似是而非，用来让「猜错 → 补正」的对比看得见
+const SD_BAD=['let','data','==','async','axios','[','path','}',',','yield','res','->','parse','{',']'];
+// 固定随机序列：拖动滑块时不会整片乱跳，只在边界处增减
+const SD_RND=[.12,.88,.34,.61,.09,.72,.45,.27,.93,.18,.55,.80,.07,.41,.66,.23,.97,.38,.52,.14,
+              .70,.29,.85,.46,.63,.11,.77,.33,.58,.91,.20,.49,.68,.05,.82,.36,.57,.25,.74,.42];
+function renderSD(){
+  const K=sdK,a=sdA,B=sdB;
+  const E=(1-Math.pow(a,K+1))/(1-a);
+  const ai=B,memBound=ai<RIDGE,f=Math.min(1,ai/RIDGE);
+  const verifyCost=1+(K-1)*f;
+  const draftCost=K*0.04;
+  const cost=verifyCost+draftCost;
+  const speed=E/cost;
+  const baseStep=memBound?13.9:13.9*ai/RIDGE;
+  const N=10;
+
+  // ---- 滑块下方的即时说明 ----
+  $('#sd-k-h').innerHTML=`一次性猜 <b>${K}</b> 个 token，然后交给主模型一起验证`;
+  $('#sd-a-h').innerHTML=`草稿每猜一个，有 <b>${(a*100).toFixed(0)}%</b> 概率和主模型的答案一致`+
+    (a>=.7?' · 典型于代码、翻译':a<=.35?' · 典型于创意写作':'');
+  const idle=(100-Math.min(100,f*100));
+  $('#sd-b-h').innerHTML=`同时处理 <b>${B}</b> 个请求 · 算力闲置 <b>${idle.toFixed(idle<10?1:0)}%</b>，`+
+    (f<.2?'验证几乎<b>免费</b>':f<.8?'验证<b>开始收费</b>':'验证<b>付满 K 倍</b>');
+
+  // ---- 读数 ----
+  $('#sd-r-acc').innerHTML=E.toFixed(1)+' <small>tok/轮</small>';
+  $('#sd-r-cost').innerHTML=cost.toFixed(2)+' <small>×单步</small>';
+  $('#sd-r-cost-n').textContent=f<.2?'验证几乎免费（算力闲置）':f<.8?'验证开始计费（算力渐满）':'验证付满 K 倍（算力饱和）';
+  $('#sd-r-sp').innerHTML=speed.toFixed(2)+' <small>×</small>';
+  $('#sd-r-sp').className='read-v '+(speed>1.5?'c-li':speed>1.02?'c-am':'c-rd');
+  const ver=$('#sd-r-ver');
+  if(speed>1.8){ver.textContent='显著加速';ver.className='read-v c-li'}
+  else if(speed>1.05){ver.textContent='有效加速';ver.className='read-v c-li'}
+  else if(speed>=.98){ver.textContent='基本持平';ver.className='read-v c-am'}
+  else{ver.textContent='反而更慢';ver.className='read-v c-rd'}
+
+  // ---- 时间线（每格可 hover） ----
+  const baseMs=N*baseStep,rounds=Math.ceil(N/E),specMs=rounds*cost*baseStep;
+  const maxMs=Math.max(baseMs,specMs);
+  $('#sd-base-m').textContent=`${N} 步 · ${baseMs.toFixed(0)} ms`;
+  $('#sd-spec-m').textContent=`${rounds} 轮 · ${specMs.toFixed(0)} ms`;
+  $('#sd-spec-m').className='lane-m '+(specMs<baseMs?'c-li':'c-rd');
+  $('#sd-base-tl').innerHTML=Array.from({length:N},(_,i)=>
+    `<div class="tseg" style="width:${baseStep/maxMs*100}%;background:oklch(${68+i%2*5}% 0.1 205)"
+      title="第 ${i+1} 步：搬一次全部权重（${baseStep.toFixed(1)} ms），只产出 1 个 token">1</div>`).join('');
+  $('#sd-spec-tl').innerHTML=Array.from({length:rounds},(_,i)=>{
+    const acc=Math.min(E,N-i*E);
+    return `<div class="tseg" style="width:${cost*baseStep/maxMs*100}%;background:oklch(${78+i%2*5}% 0.15 ${memBound?132:22})"
+      title="第 ${i+1} 轮：草稿猜 ${K} 个 + 并行验证，耗时 ${(cost*baseStep).toFixed(1)} ms，平均产出 ${acc.toFixed(1)} 个 token">${acc.toFixed(1)}</div>`;
+  }).join('');
+
+  // ---- 逐轮回放：这是用户拖完滑块会看的地方 ----
+  // idx = 已确定的正确 token 数；每轮草稿从 idx 位置开始往后猜
+  let rd='',idx=0,ri=0,total=0,shown=Math.min(rounds,3);
+  for(let r=0;r<shown;r++){
+    let cells='',accN=0,rejected=false;
+    for(let k=0;k<K;k++){
+      const pos=(idx+k)%SD_TOK.length;
+      if(rejected){
+        // 前面已经错了，后面的草稿连验证的机会都没有
+        cells+=`<span class="sd-tk drop" title="第 ${k+1} 个草稿：前面已经猜错并截断，这个连验证的机会都没有，直接丢弃">${SD_BAD[pos]}</span>`;
+        continue;
+      }
+      const ok=SD_RND[(ri++)%SD_RND.length]<a;
+      if(ok){
+        accN++;
+        cells+=`<span class="sd-tk acc" title="第 ${k+1} 个草稿猜的是「${SD_TOK[pos]}」，和主模型答案一致 → 保留。省下了一次完整的权重搬运">${SD_TOK[pos]}</span>`;
+      }else{
+        rejected=true;
+        cells+=`<span class="sd-tk rej" title="第 ${k+1} 个草稿猜的是「${SD_BAD[pos]}」，但主模型的答案是「${SD_TOK[pos]}」→ 不一致，丢弃并从这里截断">${SD_BAD[pos]}</span>`;
+      }
+    }
+    // 验证这一步本身必定产出 1 个正确 token（在第 idx+accN 位）
+    const fixPos=(idx+accN)%SD_TOK.length;
+    cells+=`<span class="sd-arrow">→</span>`+
+      `<span class="sd-tk fix" title="${rejected
+        ? `主模型在验证时已经算出了正确答案「${SD_TOK[fixPos]}」，直接用它替换掉被丢弃的那个`
+        : `${K} 个草稿全中，验证这一步顺带又算出了「${SD_TOK[fixPos]}」`}。验证必定产出 1 个正确 token —— 这就是投机解码「从不亏本」的原因">${SD_TOK[fixPos]}</span>`;
+    const got=accN+1;total+=got;
+    idx+=got;
+    rd+=`<div class="sd-rd">
+      <div class="sd-rd-n"><b>第 ${r+1} 轮</b>得 ${got} 个</div>
+      <div class="sd-rd-t">${cells}</div>
+    </div>`;
+  }
+  if(rounds>shown)rd+=`<div class="sd-rd"><div class="sd-rd-n">…</div>
+    <div class="sd-rd-t" style="color:var(--ink-faint);font-size:11.5px">还有 ${rounds-shown} 轮，模式相同</div></div>`;
+  $('#sd-rounds').innerHTML=rd;
+
+  // ---- 一句话旁白：直接说清楚「所以呢」 ----
+  const avg=(total/shown).toFixed(1);
+  const finalToks=SD_TOK.slice(0,Math.min(total,9)).map(w=>
+    `<span class="sd-tk acc" style="cursor:default">${w}</span>`).join('');
+  $('#sd-narr').innerHTML=
+    `上面 ${shown} 轮共产出 <b>${total}</b> 个 token，平均每轮 <b>${avg}</b> 个 ——
+     而基线逐 token 解码，<b>一轮只能产出 1 个</b>。<br>
+     每一轮不管猜对几个，都只搬了 <b>一次</b> 全部权重。
+     ${f<.2
+       ? `当前 batch=${B}，算力闲置 <span class="hl-l">${idle.toFixed(0)}%</span>，
+          并行验证这 ${K} 个几乎不额外花时间，所以多拿到的 token 近乎 <span class="hl-l">白捡</span>。`
+       : f<.8
+       ? `当前 batch=${B}，算力已用掉 <b>${(f*100).toFixed(0)}%</b>，
+          验证开始要付时间成本，收益被压缩但仍为正。`
+       : `当前 batch=${B}，算力已<span class="hl-r">饱和</span>，
+          验证 ${K} 个要付满 ${K} 倍时间，草稿的开销不再免费 ——
+          这就是加速比跌到 <span class="hl-r">${speed.toFixed(2)}×</span> 的原因。`}
+     <div class="sd-final"><span class="sd-final-k">最终输出</span>${finalToks}
+       <span style="color:var(--ink-faint);font-size:11px">…（被丢弃的不会出现在结果里）</span></div>`;
+}
+$('#sd-k').oninput=e=>{sdK=+e.target.value;$('#sd-k-v').textContent=sdK;clrPreset();renderSD()};
+$('#sd-a').oninput=e=>{sdA=+e.target.value/100;$('#sd-a-v').textContent=e.target.value+'%';clrPreset();renderSD()};
+$('#sd-b').oninput=e=>{sdB=sl2bs(+e.target.value);$('#sd-b-v').textContent=sdB;clrPreset();renderSD()};
+function clrPreset(){$$('#sd-preset button').forEach(x=>x.classList.remove('on'))}
+const SD_PRESETS={
+  local:{k:4,a:75,b:1},creative:{k:4,a:30,b:1},cloud:{k:4,a:75,b:512}
+};
+$$('#sd-preset button').forEach(b=>b.onclick=()=>{
+  $$('#sd-preset button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const p=SD_PRESETS[b.dataset.p];
+  sdK=p.k;sdA=p.a/100;sdB=p.b;
+  $('#sd-k').value=p.k;$('#sd-k-v').textContent=p.k;
+  $('#sd-a').value=p.a;$('#sd-a-v').textContent=p.a+'%';
+  $('#sd-b').value=bs2sl(p.b);$('#sd-b-v').textContent=p.b;
+  renderSD();
+});
+renderSD();
+
+/* ===== MU 单位与量纲 ===== */
+let uMode='t',uFlopSl=43,uPeak=165,uBytes=14;
+// 滑块 0..100 → 0.1 .. 10000 GFLOP（对数）
+const sl2flop=v=>Math.pow(10,-1+v/100*5);
+function fmtNum(x,u){
+  if(x>=1e3)return (x/1e3).toFixed(x/1e3<10?2:1)+' T'+u;
+  if(x>=1)return x.toFixed(x<10?2:0)+' G'+u;
+  if(x>=1e-3)return (x*1e3).toFixed(x*1e3<10?1:0)+' M'+u;
+  return (x*1e6).toFixed(0)+' K'+u;
+}
+function renderU(){
+  const flop=sl2flop(uFlopSl); // GFLOP
+  $('#u-flop-v').innerHTML=fmtNum(flop,'FLOP').replace(/^(\S+)\s(\S+)$/,'$1 <small>$2</small>');
+  if(uMode==='t'){
+    $('#u-peak-v').innerHTML=uPeak+' <small>TFLOPS</small>';
+    // 工作量 ÷ 算力 = 时间
+    $('#u-r2').style.display='';$('#u-r2').className='urow';
+    const ms=flop/(uPeak*1e3)*1e3; // GFLOP / GFLOPS → s → ms
+    $('#u-r3').querySelector('.urow-k').innerHTML='计算耗时<small>ms · 结果</small>';
+    $('#u-out-v').innerHTML=(ms<.001?(ms*1e6).toFixed(1)+' <small>ns</small>'
+      :ms<1?(ms*1e3).toFixed(1)+' <small>µs</small>'
+      :ms<1e3?ms.toFixed(ms<10?3:1)+' <small>ms</small>'
+      :(ms/1e3).toFixed(2)+' <small>s</small>');
+    $('#u-eq').innerHTML=`<i>${fmtNum(flop,'FLOP')}</i>  ÷  <i>${uPeak} TFLOPS</i>
+      &nbsp;=&nbsp; <b>${ms<1?(ms*1e3).toFixed(1)+' µs':ms<1e3?ms.toFixed(ms<10?3:1)+' ms':(ms/1e3).toFixed(2)+' s'}</b><br>
+      <span style="font-size:11px;color:var(--ink-faint)">工作量（名词） ÷ 速度（动词） = 时间</span>`;
+    $('#u-dim').textContent='FLOP ÷ (FLOP/s) = s';
+    $('#u-kind').textContent='名词 ÷ 动词 = 时间';
+    $('#u-ana').textContent='10 吨货 ÷ 每小时 5 吨 = 2 小时';
+  }else{
+    // 工作量 ÷ 搬运量 = 算术强度
+    $('#u-r2').className='urow';
+    $('#u-peak-v').innerHTML=uBytes.toFixed(uBytes<10?1:0)+' <small>GB</small>';
+    const ai=flop/uBytes; // GFLOP / GB = FLOP/Byte
+    $('#u-r3').querySelector('.urow-k').innerHTML='算术强度<small>FLOP/B · 结果</small>';
+    $('#u-out-v').innerHTML=(ai<10?ai.toFixed(2):ai.toFixed(0))+' <small>FLOP/B</small>';
+    const bound=ai<RIDGE;
+    $('#u-eq').innerHTML=`<i>${fmtNum(flop,'FLOP')}</i>  ÷  <i>${uBytes} GB</i>
+      &nbsp;=&nbsp; <b>${ai<10?ai.toFixed(2):ai.toFixed(0)} FLOP/B</b>
+      &nbsp;<span style="color:${bound?'var(--amber)':'var(--red)'}">（拐点 164 → ${bound?'带宽瓶颈':'算力瓶颈'}）</span><br>
+      <span style="font-size:11px;color:var(--ink-faint)">工作量（名词） ÷ 数据量（名词） = 形状（形容词，无时间）</span>`;
+    $('#u-dim').textContent='FLOP ÷ Byte = FLOP/Byte';
+    $('#u-kind').textContent='名词 ÷ 名词 = 形容词';
+    $('#u-ana').textContent='拧 100 颗螺丝 ÷ 搬 10 公斤 = 每公斤 10 颗';
+  }
+}
+$('#u-flop').oninput=e=>{uFlopSl=+e.target.value;renderU()};
+$('#u-peak').oninput=e=>{
+  if(uMode==='t'){uPeak=+e.target.value}
+  else{uBytes=Math.max(.1,+e.target.value/1200*140)}
+  renderU();
+};
+$$('#u-mode button').forEach(b=>b.onclick=()=>{
+  $$('#u-mode button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  uMode=b.dataset.m;
+  const r2k=$('#u-r2').querySelector('.urow-k'),sl=$('#u-peak');
+  if(uMode==='t'){
+    r2k.innerHTML='算力<small>TFLOPS · 速度</small>';
+    sl.value=uPeak;
+  }else{
+    r2k.innerHTML='搬运量<small>GB · 总量</small>';
+    sl.value=Math.round(uBytes/140*1200);
+  }
+  renderU();
+});
+// 十进制前缀
+const PFX=[
+  {n:'K',e:'10³',x:'千。本页几乎用不到，KB 级只出现在 L1 缓存容量。'},
+  {n:'M',e:'10⁶',x:'百万。L2 缓存 72 MB、单个矩阵乘 33.5 MFLOP 都在这一档。'},
+  {n:'G',e:'10⁹',x:'十亿。参数量（7B = 7e9）、显存容量（24 GB）、单 token 计算量（14 GFLOP）都在这一档。'},
+  {n:'T',e:'10¹²',x:'万亿。硬件峰值算力（165 TFLOPS）、片内缓存带宽（~20 TB/s）用这一档。'},
+  {n:'P',e:'10¹⁵',x:'千万亿。单卡达不到，用于描述整个集群算力或训练总计算量（如 GPT-3 约 3.14e23 FLOP）。'},
+  {n:'E',e:'10¹⁸',x:'百亿亿。超算排行榜（exascale）和前沿模型训练总量的单位。'}
+];
+let pfxPick=2;
+function renderPfx(){
+  $('#u-pfx').innerHTML=PFX.map((p,i)=>
+    `<div class="pfx ${i===pfxPick?'on':''}" data-i="${i}">
+      <div class="pfx-n">${p.n}</div><div class="pfx-e">${p.e}</div><div class="pfx-x">${p.x}</div>
+    </div>`).join('');
+  $$('#u-pfx .pfx').forEach(el=>el.onclick=()=>{pfxPick=+el.dataset.i;renderPfx()});
+}
+renderPfx();renderU();
+
+/* ===== MS 数据来源 · 换卡对照 ===== */
+const GPUS=[
+  {n:'RTX 4090',s:'Ada · 消费卡',vram:24,bw:1008,peak:165,
+    note:'本页基准。拐点 164，batch 开到一百多就能打满算力。'},
+  {n:'RTX 3090',s:'Ampere · 上代消费卡',vram:24,bw:936,peak:71,
+    note:'算力只有 4090 的 43%，带宽却接近 —— 拐点最低，最不容易撞算力墙。'},
+  {n:'A100 80GB',s:'Ampere · 数据中心',vram:80,bw:2039,peak:312,
+    note:'HBM2e 带宽是 4090 的 2 倍，拐点与 4090 接近，但能单卡装下 70B 量化模型。'},
+  {n:'H100 SXM',s:'Hopper · 数据中心',vram:80,bw:3350,peak:990,
+    note:'拐点最高。算力涨得比带宽快，单用户解码浪费的算力比例反而更夸张。'}
+];
+let gpuPick=0;
+function renderGPU(){
+  $('#s-gpus').innerHTML=GPUS.map((g,i)=>{
+    const r=g.peak*1e12/(g.bw*1e9);
+    return `<div class="gpu ${i===gpuPick?'on':''}" data-i="${i}">
+      <div class="gpu-n">${g.n}<small>${g.s}</small></div>
+      <div class="gpu-r">${g.vram} GB · ${g.bw} GB/s<br>${g.peak} TFLOPS · 拐点 <b>${r.toFixed(0)}</b></div>
+    </div>`;
+  }).join('');
+  $$('#s-gpus .gpu').forEach(el=>el.onclick=()=>{gpuPick=+el.dataset.i;renderGPU()});
+  const g=GPUS[gpuPick],ridge=g.peak*1e12/(g.bw*1e9);
+  const stepMs=14/g.bw*1000, tps=1000/stepMs, util=1/ridge*100;
+  $('#s-read').innerHTML=`
+    <div class="read"><div class="read-k">拐点</div><div class="read-v c-cy">${ridge.toFixed(0)} <small>FLOP/B</small></div>
+      <div class="read-n">= ${g.peak} TFLOPS ÷ ${g.bw} GB/s</div></div>
+    <div class="read"><div class="read-k">7B fp16 单步耗时</div><div class="read-v c-am">${stepMs.toFixed(1)} <small>ms</small></div>
+      <div class="read-n">14 GB ÷ ${g.bw} GB/s</div></div>
+    <div class="read"><div class="read-k">单用户生成速度</div><div class="read-v c-li">${tps.toFixed(0)} <small>tok/s</small></div>
+      <div class="read-n">batch=1 理论上限</div></div>
+    <div class="read"><div class="read-k">batch=1 算力利用率</div><div class="read-v c-rd">${util.toFixed(2)}%</div>
+      <div class="read-n">闲置 ${(100-util).toFixed(1)}%</div></div>
+    <div class="read"><div class="read-k">打满算力所需 batch</div><div class="read-v c-vi">${ridge.toFixed(0)}</div>
+      <div class="read-n">算术强度 ≈ batch size</div></div>
+    <div class="read"><div class="read-k">能装下 7B fp16</div><div class="read-v c-li" style="font-size:15px">${g.vram>=14?'可以':'不行'}</div>
+      <div class="read-n">${g.vram} GB 显存，余 ${(g.vram-14).toFixed(0)} GB 给 KV cache</div></div>`;
+  const vsBase=ridge/164;
+  $('#s-verdict').className='verdict '+(vsBase>1.3?'comp':'mem');
+  $('#s-verdict-t').textContent='■ '+g.n;
+  $('#s-verdict-p').innerHTML=`${g.note}
+    相对 4090 的拐点 164，这张卡是 <strong>${ridge.toFixed(0)}</strong>（${vsBase>=1?vsBase.toFixed(2)+'×':'0.'+Math.round(vsBase*100)+'×'}）。
+    ${ridge>200
+      ?'拐点越高意味着<strong style="color:var(--red)">算力相对带宽越过剩</strong>，单用户场景浪费更严重，batching 的边际收益更大。'
+      :'拐点较低意味着<strong style="color:var(--lime)">算力与带宽相对均衡</strong>，较小的 batch 就能把算力用起来。'}`;
+}
+renderGPU();
+
+/* ===== 答疑抽屉 ===== */
+const FAQ=[
+  {c:'最容易卡住的地方',qs:[
+    {q:'带宽不是网络的概念吗？为什么单机 GPU 也有带宽？',
+     a:`<p>这里的「带宽」和<b>网络完全无关</b>，指的是<b>显存带宽</b>。</p>
+        <p>GPU 其实是两个物理部件：</p>
+        <ul><li><b>计算芯片（die）</b> —— 负责算，自带的缓存只有几十 MB</li>
+        <li><b>显存颗粒（VRAM）</b> —— 负责存，就是标 24GB 的那个，焊在芯片旁边</li></ul>
+        <p>两者之间靠一组物理连线连接。这条线<b>每秒最多能搬多少字节</b>，就是显存带宽。
+        同一张卡内部搬数据<b>也要花时间</b> —— 这就是瓶颈的来源。</p>`,
+     j:'#m1'},
+    {q:'GPU 缓存只有几十 MB，怎么装得下 14GB 的模型？',
+     a:`<p><b>根本不需要同时装下。</b>这是最常见的误解。</p>
+        <p>权重住在 VRAM（24GB），不住在芯片缓存里。真实过程是<b>逐层流式</b>：</p>
+        <ul><li>搬第 1 层 → 算第 1 层 → <b>立刻丢掉</b></li>
+        <li>搬第 2 层 → 算第 2 层 → 丢掉……</li></ul>
+        <p>缓存在任意时刻只持有<b>其中一层</b>，几十 MB 完全够用。
+        但<b>累计搬运量</b>等于整个模型 14GB，这才是耗时的来源。</p>`,
+     j:'#m2'},
+    {q:'为什么每生成一个字都要把整个模型重搬一遍？不能缓存吗？',
+     a:`<p>因为生成是<b>自回归</b>的：要算第 N+1 个 token，必须先知道第 N 个是什么。</p>
+        <p>这是严格串行的链条，<b>无法把多步合并</b>。每一步都得完整跑一次全部 32 层。</p>
+        <p>权重本身确实没变，但它<b>放不进</b>片上缓存，所以每一步都得重新从 VRAM 搬一遍。
+        这就是「搬 14GB 只换 1 个 token」的由来。</p>`,
+     j:'#m2'},
+    {q:'算力利用率 0.6% 是不是说明显卡很差？',
+     a:`<p>不是。<b>是工作负载的形状不对，不是卡不行。</b></p>
+        <p>4090 搬 1 个字节的时间里，本来能做 <b>164 次</b>运算。
+        而单用户解码只给了它 <b>1 次</b>，剩下 163 次的能力就空转了。</p>
+        <p>同一张卡换成 batch=164，算力立刻打满 —— 硬件没变，变的是喂给它的负载形状。</p>`,
+     j:'#m4'}
+  ]},
+  {c:'单位与数字',qs:[
+    {q:'FLOP、TFLOPS、FLOP/B 怎么区分？',
+     a:`<ul><li><code>GFLOP</code> —— <b>名词</b>，工作量总量，不含时间。「这趟要搬 10 吨货」</li>
+        <li><code>TFLOPS</code> —— <b>动词</b>，速度，含 Per Second。「这车每小时能搬 5 吨」</li>
+        <li><code>FLOP/B</code> —— <b>形容词</b>，比例，不含时间。「每搬 1 公斤要拧几颗螺丝」</li></ul>
+        <p>判别只需问一句：<b>有没有「每秒」，有没有「每字节」</b>。</p>`,
+     j:'#mu'},
+    {q:'7B 模型 = 14GB 是怎么算出来的？',
+     a:`<p>就一个乘法：<b>参数数量 × 每参数字节数</b>。</p>
+        <p>7B = 70 亿个权重数字，fp16 下每个占 2 字节：</p>
+        <p><code>7e9 × 2 = 1.4e10 字节 = 14 GB</code></p>
+        <p>换 int4（每个 0.5 字节）就是 <code>7e9 × 0.5 = 3.5 GB</code>。</p>`,
+     j:'#m3'},
+    {q:'为什么单 token 计算量是「2 × 参数量」？',
+     a:`<p>因为矩阵乘里，<b>每个权重参与 1 次乘法 + 1 次加法</b>，记 2 次浮点运算。</p>
+        <p>所以 7B 模型：<code>2 × 7e9 = 14 GFLOP</code>。</p>
+        <p>这是业界标准估算，忽略了 attention 的 KV 计算、LayerNorm、softmax。
+        <b>短上下文误差在 10% 内，长上下文不适用</b>（attention 项会显著上升）。</p>`,
+     j:'#mu'},
+    {q:'拐点 164 这个数是怎么来的？是硬件出厂参数吗？',
+     a:`<p><b>是推算的，没有厂商标这一项。</b>但两个输入都是官方规格，所以客观可复现。</p>
+        <p><code>165e12 FLOP/s ÷ 1008e9 Byte/s ≈ 164 FLOP/Byte</code></p>
+        <p>含义是：硬件<b>搬 1 个字节的时间里，能做 164 次运算</b>。
+        你的负载低于这个比例就是带宽瓶颈，高于就是算力瓶颈。</p>
+        <p><b>但同一张卡有多个拐点</b> —— 分子换精度（FP32/FP16/INT8）、
+        分母换存储层（L2/VRAM/主机内存），4090 的拐点能从 33 变到 2750。
+        所以「这张卡拐点是多少」这个问题不完整，必须说清口径。</p>`,
+     j:'#m4'},
+    {q:'规格算出来的拐点，和实测的一样吗？',
+     a:`<p><b>不一样，规格值偏乐观。</b>两处来源：</p>
+        <ul><li><b>峰值算力</b>假设 tensor core 100% 利用并维持 boost 频率，实际跑不满</li>
+        <li><b>带宽规格</b>是 <code>位宽 × 引脚速率 ÷ 8</code> 的理论值，
+        实际可达通常只有 <b>80~90%</b></li></ul>
+        <p>所以规格推导值<b>只适合快速估量级</b>。精确调优要用 profiler 实测，
+        比如 Nsight Compute 自带的 roofline 分析。</p>
+        <p>好在判断「该不该开大 batch」这类问题，这点误差不影响结论。</p>`,
+     j:'#m4'}
+  ]},
+  {c:'量化与 batch',qs:[
+    {q:'量化会让模型变笨吗？',
+     a:`<p>会损失精度，但<b>没想象中严重</b>。</p>
+        <p>关键在于模型有<b>几十亿个参数</b>，单个权重的舍入误差会在整体中被大量平均掉。</p>
+        <ul><li><b>int8</b> —— 基本无损</li>
+        <li><b>int4</b> —— 多数任务可接受，本地部署主力</li>
+        <li><b>int2</b> —— 开始明显掉质量</li></ul>
+        <p>而收益是双份的：<b>省显存 + 搬得快</b>。int4 相对 fp16 理论吞吐快接近 4 倍。</p>`,
+     j:'#m3'},
+    {q:'12GB 显存怎么可能跑 125B 的模型？',
+     a:`<p>三层机制叠加，不是单一魔法：</p>
+        <ul><li><b>MoE 稀疏激活</b> —— 125B 是总参数量，每步只激活少数专家，
+        真正要搬的可能只有十几 B</li>
+        <li><b>4-bit 量化</b> —— 再压掉 4 倍</li>
+        <li><b>分层 offload</b> —— 冷门专家放主机内存，按需换入</li></ul>
+        <p>三者叠加后<b>热路径数据量</b>才压到 12GB 以内。</p>`,
+     j:'#m3'},
+    {q:'开大 batch 为什么能提吞吐？对我个人用户有用吗？',
+     a:`<p>原理：<b>一次搬进来的权重可以同时服务多个请求</b>。
+        batch=64 时还是搬同样的 14GB，但一次算出 64 个 token。</p>
+        <p><b>但对个人用户基本没用。</b>batching 提升的是<b>总吞吐</b>（所有用户合计），
+        单个请求的延迟<b>不会变快</b>，甚至可能略慢（要等攒够一批）。</p>
+        <p>它是云服务商的手段。你本地单用户跑，batch 永远是 1。</p>`,
+     j:'#m4'},
+    {q:'那我本地想提速，应该做什么？',
+     a:`<p>按性价比排序：</p>
+        <ul><li><b>量化</b> —— 最直接。int4 相对 fp16 理论快 4 倍</li>
+        <li><b>投机解码 / MTP</b> —— 你算力闲着 99%，这是白捡的，2-3 倍</li>
+        <li><b>换带宽更高的卡</b> —— 单用户场景下，<b>带宽比算力重要得多</b></li></ul>
+        <p>最后一条值得强调：选卡时别只看 TFLOPS。
+        单用户解码卡在带宽上，一张算力低但带宽高的卡可能反而更快。</p>`,
+     j:'#ms'}
+  ]},
+  {c:'投机解码',qs:[
+    {q:'投机解码为什么能加速？猜错了不是白费吗？',
+     a:`<p>关键在于：<b>验证 K 个和验证 1 个，搬运量完全一样</b>（都是搬一遍全部权重）。
+        而你的算力闲着 99%，并行多算 K 个几乎不花额外时间。</p>
+        <p>猜错也<b>不亏本</b>：验证这一步本身一定会产出 1 个正确 token，
+        等价于一次普通解码。所以最差情况是打平，不会变慢。</p>
+        <p>——<b>前提是算力有富余</b>。算力饱和后这个前提就没了。</p>`,
+     j:'#m5'},
+    {q:'同样的设置，为什么云端反而更慢？',
+     a:`<p>因为云端 batch 很大，<b>算力已经饱和</b>。</p>
+        <p>投机解码的本质是<b>「多算换少搬」</b>：</p>
+        <ul><li>算力闲置时 —— 多算的那部分<b>免费</b>，净赚</li>
+        <li>算力饱和时 —— 多算的每一次都要<b>付真实时间</b>，草稿成为纯开销</li></ul>
+        <p>所以同一套参数，本地 2.6× 加速，云端大 batch 变成 0.73×（更慢）。
+        <b>决定因素不是算法，而是你在 Roofline 屋顶的哪一段上。</b></p>`,
+     j:'#m5'},
+    {q:'接受率 α 由什么决定？我能提高它吗？',
+     a:`<p>主要由<b>任务的确定性</b>决定：</p>
+        <ul><li><b>代码补全、翻译、格式化</b> —— 下一个 token 高度可预测，α 可达 70~80%</li>
+        <li><b>创意写作、开放对话</b> —— 分支多，α 只有 30% 左右</li></ul>
+        <p>其次是草稿模型的质量，以及采样温度（temperature 越低越容易猜对）。</p>
+        <p>所以同一套部署，跑代码任务和跑写作任务的实际加速比可以差两三倍。</p>`,
+     j:'#m5'}
+  ]}
+];
+const adBody=$('#ad-body');
+function renderFAQ(kw){
+  const k=(kw||'').trim().toLowerCase();
+  let html='',hit=0;
+  FAQ.forEach(g=>{
+    const qs=g.qs.filter(x=>!k||(x.q+x.a).toLowerCase().includes(k));
+    if(!qs.length)return;
+    hit+=qs.length;
+    html+=`<div class="ad-cat">${g.c}</div>`;
+    qs.forEach(x=>{
+      html+=`<details class="ad-q"${k?' open':''}><summary>${x.q}</summary>
+        <div class="ad-a">${x.a}
+        ${x.j?`<a class="ad-jump" href="${x.j}" data-jump="1">→ 去对应模块</a>`:''}</div></details>`;
+    });
+  });
+  adBody.innerHTML=hit?html:
+    `<div class="ad-empty">没有匹配「${kw}」的条目。<br><br>
+      试试：带宽 / 显存 / 量化 / batch / 拐点 / 投机 / FLOP<br><br>
+      或者用底部按钮复制提问模板，拿去问 AI。</div>`;
+  adBody.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>closeAsk());
+}
+function openAsk(){
+  $('#askdrw').classList.add('open');$('#askmask').classList.add('open');
+  setTimeout(()=>$('#ad-input').focus(),320);
+}
+function closeAsk(){
+  $('#askdrw').classList.remove('open');$('#askmask').classList.remove('open');
+}
+$('#askbtn').onclick=openAsk;
+$('#ad-close').onclick=closeAsk;
+$('#askmask').onclick=closeAsk;
+$('#ad-input').oninput=e=>renderFAQ(e.target.value);
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeAsk();tipEl.classList.remove('show')}
+});
+// 复制带当前参数的提问模板
+$('#ad-copy').onclick=()=>{
+  const g=GPUS[gpuPick],ridge=g.peak*1e12/(g.bw*1e9);
+  const rpA=RP_NUM[rpN],rpB=RP_DEN[rpD],rpR=rpA.v/rpB.v;
+  const prec=PRECS[qP];
+  const tpl=`我在学大模型推理的硬件瓶颈，当前上下文：
+
+【基准硬件】${g.n} · ${g.vram}GB · ${g.bw} GB/s · ${g.peak} TFLOPS(fp16 dense)
+  Roofline 拐点 = ${g.peak}e12 ÷ ${g.bw}e9 ≈ ${ridge.toFixed(0)} FLOP/Byte
+
+【模型】${qB}B ${prec.n} = ${qB}e9 × ${prec.b} 字节 = ${(qB*prec.b).toFixed(2).replace(/\.?0+$/,'')} GB
+  单 token 计算量 = 2 × ${qB}e9 = ${qB*2} GFLOP
+  算术强度 = ${(2/prec.b).toFixed(2)} FLOP/Byte（计算量 ÷ 搬运量）
+
+【拐点矩阵当前口径】${rpA.n} ÷ ${rpB.n}
+  = ${(rpA.v/1e3).toFixed(1)}e12 ÷ ${(rpB.v*1e9).toExponential(2)} ≈ ${rpR<10?rpR.toFixed(1):rpR.toFixed(0)} FLOP/Byte
+  （本页默认口径为 FP16 dense ÷ VRAM = 164；换口径这个数就变）
+
+【当前 Roofline 位置】batch = ${rfBS}
+  → ${rfBS<RIDGE?'带宽瓶颈':'算力瓶颈'}，算力利用率 ${(Math.min(rfBS,RIDGE)/RIDGE*100).toFixed(rfBS<10?2:0)}%
+
+【当前投机解码参数】K=${sdK} · α=${(sdA*100).toFixed(0)}% · batch=${sdB}
+  期望接受长度 E = (1-α^(K+1))/(1-α) = ${((1-Math.pow(sdA,sdK+1))/(1-sdA)).toFixed(2)}
+
+我的问题是：`;
+  navigator.clipboard.writeText(tpl).then(()=>{
+    const b=$('#ad-copy'),o=b.textContent;
+    b.textContent='✓ 已复制，粘贴后补上你的问题';b.style.color='var(--lime)';
+    setTimeout(()=>{b.textContent=o;b.style.color=''},2200);
+  }).catch(()=>{
+    const b=$('#ad-copy');b.textContent='复制失败，请手动选中页面内容';
+    setTimeout(()=>{b.textContent='复制提问模板（含当前参数）'},2200);
+  });
+};
+renderFAQ('');
+</script>
+</body>
+</html>

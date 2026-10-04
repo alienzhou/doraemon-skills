@@ -50,6 +50,7 @@ npx @vibe-x/agent-better-checkpoint --platform cursor
 | [product-thinking-coach](skills/product-thinking-coach/) | 用状态迁移把产品思考逼充分，再产出 PRD / 方案 | — |
 | [competitor-intake](skills/competitor-intake/) | 竞品小功能 → 实机取证 → 产品文档 → 需求任务的采集闭环 | — |
 | [learn-with-me](skills/learn-with-me/) | 陪练式学习：第一性原理 + 小练习，用户先答、AI 再反馈 | — |
+| [learn-lab](skills/learn-lab/) | 把概念做成单文件交互课件：教具自解释、解释按需展开、追问回流课件 | — |
 | [conversation-distiller](skills/conversation-distiller/) | 把对话里可复用的方法蒸馏成方法论 / Skill 骨架 | — |
 
 ### 工程与排障
