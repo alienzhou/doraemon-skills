@@ -91,7 +91,7 @@ def scene_frames(video, out_dir, thresh):
         os.remove(f)
     subprocess.run(["ffmpeg", "-v", "error", "-i", video,
                     "-vf", f"select='gt(scene,{thresh})',scale=960:-2",
-                    "-vsync", "vfr", "-q:v", "4",
+                    "-fps_mode", "vfr", "-pix_fmt", "yuvj420p", "-q:v", "4",
                     os.path.join(kd, "kf%03d.jpg"), "-y"], check=True)
     return [os.path.relpath(f, out_dir) for f in sorted(glob.glob(kd + "/*.jpg"))]
 
