@@ -1,0 +1,19 @@
+skills/xhs-intake/scripts/xhs_analyze_video.py
+  s_3f23efb1434656::t_5122501588206f 94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3da8f01a8c1fc9a7335fed6d86d43443b8510f96",
+  "prompts": {},
+  "sessions": {
+    "s_3f23efb1434656": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10b81-dbda-7382-a30a-70975b87ec52",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
