@@ -1,6 +1,23 @@
 # Definition Review Checklist
 
-20-item checklist for reviewing Skill definition quality, organized into 4 categories.
+## Contents
+
+- **Status Symbols** — ✅ / ⚠️ / ❌ meanings
+- **📁 Structure (S1-S4)** — SKILL.md existence, folder naming, directory layout, name consistency
+- **📋 Format (F1-F5)** — YAML delimiters, `name`, `description`, forbidden content, optional fields
+- **📝 Content (C1-C8)** — description WHAT/WHEN, actionable instructions, errors, examples,
+  links, progressive disclosure, prominence of critical instructions
+- **🔗 Content (C9-C12)** — time-sensitivity, terminology consistency, reference depth, workflows
+- **🛠️ Scripts (SC1-SC8)** — conditional block for skills shipping a `scripts/` directory
+- **🎯 Trigger (T1-T3)** — positive triggers, scope, negative triggers
+- **Quick Reference Table** — all IDs with their detection method
+- **Category Totals** — how many items per category
+
+---
+
+Checklist for reviewing Skill definition quality. Structure (S1-S4), Format (F1-F5) and Trigger
+(T1-T3) are the original four-category set; Content now runs C1-C12, and the Scripts block
+(SC1-SC8) is conditional on the skill shipping a `scripts/` directory.
 
 ## Status Symbols
 
@@ -45,9 +62,15 @@
 |--------|-----------|
 | ✅ Pass | Uses standard optional directories: `scripts/`, `references/`, `assets/` |
 | ⚠️ Warn | Missing optional directories (acceptable if not needed) |
-| ❌ Fail | Contains forbidden `README.md` in skill folder |
+| ⚠️ Warn | Contains `README.md` in skill folder (not forbidden, but SKILL.md should carry the load) |
+| N/A | No optional directories needed |
 
 **Detection:** Programmatic (directory listing)
+
+> **Note:** Anthropic's docs do not forbid `README.md` in a skill folder, but they do require all
+> essential instructions to live in `SKILL.md` (only `name` + `description` are pre-loaded; `SKILL.md`
+> is read on demand). A `README.md` will not be read unless something points at it, so treat it as a
+> maintainability warning rather than a failure.
 
 **Standard Structure:**
 ```
@@ -90,11 +113,15 @@ your-skill/
 
 | Status | Condition |
 |--------|-----------|
-| ✅ Pass | Exists, kebab-case, no spaces, no capitals |
-| ⚠️ Warn | Exists but has minor format issues |
+| ✅ Pass | Exists, kebab-case, no spaces, no capitals, ≤ 64 characters |
+| ⚠️ Warn | Exists but has minor format issues (e.g. underscore) |
+| ⚠️ Warn | Exceeds 64 characters (near or over the documented limit) |
 | ❌ Fail | Missing or completely invalid |
 
-**Detection:** Programmatic (YAML parse + regex)
+**Detection:** Programmatic (YAML parse + regex + length check)
+
+> **Limit:** Anthropic documents `name` as **maximum 64 characters**, lowercase letters/numbers/hyphens
+> only, no XML tags, no reserved words.
 
 **Valid Examples:**
 ```yaml
@@ -106,6 +133,7 @@ name: my-cool-skill       # ✅
 ```yaml
 name: Skill Reviewer      # ❌ spaces and capitals
 name: skill_reviewer      # ⚠️ underscore
+name: <a-70-character-name-that-exceeds-the-documented-limit>   # ⚠️ too long
 ```
 
 ### F3: description Field
@@ -161,6 +189,8 @@ metadata:
 ---
 
 ## 📝 Content (C1-C8)
+
+> Instruction quality: is the writing specific, complete, and well-organized?
 
 ### C1: Description Contains WHAT
 
@@ -301,10 +331,14 @@ Result: Review report with pass/warn/fail status
 | Status | Condition |
 |--------|-----------|
 | ✅ Pass | SKILL.md focused on core instructions, details in references/ |
-| ⚠️ Warn | SKILL.md is long (> 200 lines) but acceptable |
-| ❌ Fail | SKILL.md is bloated (> 300 lines), should split |
+| ⚠️ Warn | SKILL.md is long (> 350 lines) but still workable |
+| ❌ Fail | SKILL.md is bloated (> 500 lines), must split |
 
 **Detection:** Model-based (line count + content analysis)
+
+> **Threshold:** Anthropic's documented limit is **under 500 lines** for the `SKILL.md` body
+> (`Token budgets`: "Keep SKILL.md body under 500 lines for optimal performance"). The 350-line
+> warning is a local early-warning band, not an official number.
 
 **Principle:**
 ```
@@ -396,6 +430,216 @@ description: "... Do NOT use for runtime debugging (use agent-debug skill instea
 
 ---
 
+## 🔗 Content (C9-C12)
+
+> Content hygiene: rules that keep the skill from rotting or being misread — these extend the
+> Content category beyond instruction quality. All four come from Anthropic's
+> `Checklist for effective Skills`.
+
+### C9: No Time-Sensitive Information
+
+**Check:** Content avoids facts that will expire.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | No dates, versions, or "currently/latest" claims that will rot |
+| ⚠️ Warn | Some time-bound info, but isolated and clearly marked |
+| ❌ Fail | Core instructions depend on "current" state that will change |
+
+**Detection:** Model-based (date/version/"latest" phrase scan)
+
+> **Official guidance:** `Avoid time-sensitive information`. Historical context belongs in an
+> explicitly labelled "old patterns" section, not in the main instructions.
+
+**Bad:**
+```markdown
+Use the current model (Opus 4), released in 2025, which is the latest.
+```
+
+**Good:**
+```markdown
+## Old patterns
+<!-- Historical context, kept for older setups. Not current guidance. -->
+...previous approach...
+```
+
+### C10: Consistent Terminology
+
+**Check:** One concept keeps one name throughout the skill.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Same term used consistently across SKILL.md and references/ |
+| ⚠️ Warn | Minor synonym drift (e.g. "check" vs "checklist item") |
+| ❌ Fail | Same concept named differently, causing ambiguity |
+
+**Detection:** Model-based (term frequency + synonym drift analysis)
+
+> **Official guidance:** `Use consistent terminology`. Aliases for the same concept make
+> instructions ambiguous — pick one name and use it everywhere.
+
+### C11: References Are One Level Deep
+
+**Check:** Every reference file links directly from SKILL.md.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | All reference files reachable directly from SKILL.md |
+| ⚠️ Warn | Shallow nesting that is documented and intentional |
+| ❌ Fail | Files reachable only through another reference file |
+
+**Detection:** Programmatic (parse all `references/*` links, build reachability graph)
+
+> **Official guidance:** `Avoid deeply nested references` — "Claude may partially read files when
+> they're referenced from other referenced files… Keep references one level deep from SKILL.md."
+>
+> **How to check:** list every file SKILL.md links to, then parse those files for links of their
+> own. Anything only reachable through a second hop is a ❌. Links inside an **example or template**
+> (e.g. a fictional `my-skill/` tree) are not real references and must not be flagged.
+
+### C12: Workflows Have Clear Steps
+
+**Check:** Complex multi-step processes are broken into explicit steps.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Multi-step work has ordered steps, and a checklist when order matters |
+| ⚠️ Warn | Steps present but ordering or completion criteria unclear |
+| ❌ Fail | Complex workflow described only in prose |
+
+**Detection:** Model-based (workflow extraction + step completeness check)
+
+> **Official guidance:** `Use workflows for complex tasks` — break complex operations into clear
+> sequential steps; for particularly complex workflows provide a checklist Claude can copy and tick
+> off. Add the checklist **only when order matters** — otherwise it contradicts the guidance to give
+> Claude the goal rather than prescriptive steps.
+
+---
+
+## 🛠️ Scripts (SC1-SC8)
+
+> **Conditional category.** Only applies when the skill ships a `scripts/` directory.
+> If there are no scripts, mark the whole category **N/A** and exclude it from the total —
+> do not report passes or failures for a category that does not exist.
+
+### SC1: Scripts Solve Problems, Don't Defer
+
+**Check:** Scripts implement the logic rather than telling Claude to figure it out.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Script does the work and returns a result |
+| ❌ Fail | Script only prints instructions for Claude to follow |
+
+**Detection:** Model-based (script body inspection)
+
+> **Official guidance:** `Solve, don't defer`. A script that outputs "now step through these files
+> yourself" has moved the work back into the model instead of doing it.
+
+### SC2: No Voodoo Constants
+
+**Check:** Every hard-coded value is justified.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Magic numbers/thresholds carry a comment explaining their origin |
+| ⚠️ Warn | Values present with partial justification |
+| ❌ Fail | Unexplained constants that readers cannot safely change |
+
+**Detection:** Model-based (constant + comment scan)
+
+### SC3: Dependencies Explicitly Declared
+
+**Check:** Required packages are named, with an install line.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Install line next to the script (e.g. `pip install pypdf`) and listed in SKILL.md |
+| ⚠️ Warn | Dependencies named but no install command |
+| ❌ Fail | Script imports packages that are never declared |
+| N/A | No third-party dependencies |
+
+**Detection:** Programmatic (import/require scan cross-checked against SKILL.md)
+
+> **Official guidance:** `Avoid assuming tools are installed` — "Don't assume packages are
+> available." Bad: "Use the pdf library to process the file." Good: "Install required package:
+> `pip install pypdf`". If it's already installed, Claude skips the step; if not, the skill still
+> works on a teammate's machine on day one.
+
+### SC4: Scripts Have Clear Documentation
+
+**Check:** Each script has a header or docstring explaining its purpose and usage.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Purpose, inputs, and outputs documented |
+| ⚠️ Warn | Purpose clear but usage/arguments undocumented |
+| ❌ Fail | No documentation at all |
+
+**Detection:** Model-based (header/docstring scan)
+
+### SC5: Forward Slash Paths Only
+
+**Check:** No Windows-style backslash paths.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | All paths use forward slashes |
+| ❌ Fail | Any backslash path (`reference\guide.md`) |
+
+**Detection:** Programmatic (regex scan for `\\` in path-like strings)
+
+> **Official guidance:** `Avoid Windows-style paths`. Skills are navigated like a filesystem with
+> forward slashes regardless of the host OS.
+
+### SC6: Error Handling Is Explicit and Helpful
+
+**Check:** Scripts surface actionable errors rather than failing silently.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Failures raise with a message naming the cause and next action |
+| ⚠️ Warn | Errors raised but messages are terse |
+| ❌ Fail | Silent failure or bare traceback with no context |
+
+**Detection:** Model-based (error-path inspection)
+
+> Note this is the **script-level** counterpart to C4, which covers the SKILL.md instructions.
+
+### SC7: Validation for Critical Operations
+
+**Check:** Destructive or consequential operations verify preconditions.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | Checks target existence/state before acting; verifies after writing |
+| ⚠️ Warn | Partial validation |
+| ❌ Fail | Destructive action with no precondition check |
+| N/A | No destructive or critical operations |
+
+**Detection:** Model-based (destructive-operation scan)
+
+> **Official guidance:** `Validation/verification steps for critical operations` and
+> `Create verifiable intermediate outputs`.
+
+### SC8: Feedback Loops for Quality-Critical Tasks
+
+**Check:** Quality-critical paths run validator → fix → re-check.
+
+| Status | Condition |
+|--------|-----------|
+| ✅ Pass | A check-and-retry loop exists (script or documented procedure) |
+| ⚠️ Warn | Validation exists but does not loop |
+| ❌ Fail | No validation step for quality-critical output |
+| N/A | Task is not quality-critical |
+
+**Detection:** Model-based (loop/retry pattern scan)
+
+> **Official guidance:** `Implement feedback loops` — "Common pattern: Run validator → fix errors →
+> repeat. This pattern greatly improves output quality." The validator does not have to be code.
+
+---
+
 ## Quick Reference Table
 
 | ID | Check Item | Detection |
@@ -417,8 +661,26 @@ description: "... Do NOT use for runtime debugging (use agent-debug skill instea
 | C6 | Reference links | Model |
 | C7 | Progressive disclosure | Model |
 | C8 | Critical instructions | Model |
+| C9 | No time-sensitive info | Model |
+| C10 | Consistent terminology | Model |
+| C11 | References one level deep | Programmatic |
+| C12 | Workflows have clear steps | Model |
+| SC1-SC8 | Scripts hygiene (conditional) | Mixed |
 | T1 | Positive triggers | Model |
 | T2 | Trigger scope | Model |
 | T3 | Negative triggers | Model |
 
-**Summary:** 9 programmatic checks (S1-S4, F1-F5) + 11 model-based checks (C1-C8, T1-T3)
+**Summary:** 31 checks total — 11 programmatic (S1-S4, F1-F5, C11) + 20 model-based
+(C1-C10, C12, T1-T3), plus the conditional Scripts block (SC1-SC8) when `scripts/` exists.
+
+**Category totals** (Scripts excluded when absent):
+
+| Category | Items | Count |
+|----------|-------|-------|
+| 📁 Structure | S1-S4 | 4 |
+| 📋 Format | F1-F5 | 5 |
+| 📝 Content | C1-C12 | 12 |
+| 🎯 Trigger | T1-T3 | 3 |
+| 🛠️ Scripts (conditional) | SC1-SC8 | 8 |
+| **Base total (no scripts)** | | **24** |
+| **With scripts** | | **32** |

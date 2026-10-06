@@ -38,7 +38,7 @@ Review Skill definition quality against best practices.
 **Actions**:
 1. Read folder structure: `ls -la ./my-skill/`
 2. Check SKILL.md exists and parse YAML frontmatter
-3. Run 20-item checklist (S1-S4, F1-F5, C1-C8, T1-T3)
+3. Run the checklist (S1-S4, F1-F5, C1-C12, T1-T3, plus SC1-SC8 if `scripts/` exists)
 4. Generate review report
 
 **Result**:
@@ -48,9 +48,10 @@ Review Skill definition quality against best practices.
 |----------|---------|---------|--------|
 | Structure | 4 | 0 | 0 |
 | Format | 5 | 0 | 0 |
-| Content | 6 | 2 | 0 |
+| Content | 10 | 2 | 0 |
 | Trigger | 3 | 0 | 0 |
-| **Total** | **18** | **2** | **0** |
+| Scripts | N/A | N/A | N/A |
+| **Total** | **22** | **2** | **0** |
 ```
 
 ---
@@ -77,10 +78,14 @@ Required: Skill folder path (e.g., ./skill/ or ./my-skill/)
 |----------|-------|-------|
 | 📁 Structure | File/folder layout | S1-S4 |
 | 📋 Format | YAML frontmatter | F1-F5 |
-| 📝 Content | Instructions quality | C1-C8 |
+| 📝 Content | Instructions and content hygiene | C1-C12 |
 | 🎯 Trigger | Activation design | T1-T3 |
+| 🛠️ Scripts | Script hygiene (conditional) | SC1-SC8 |
 
-> See `references/definition-checklist.md` for complete 20-item checklist
+> See `references/definition-checklist.md` for the complete checklist.
+>
+> **Scripts is conditional.** If the skill has no `scripts/` directory, report the whole
+> category as N/A and exclude it from the total. When present, it counts as 8 more items.
 
 ### Workflow
 
@@ -91,11 +96,13 @@ Step 2: Check Structure (S1-S4)
         ↓
 Step 3: Check Format (F1-F5)
         ↓
-Step 4: Check Content (C1-C8)
+Step 4: Check Content (C1-C12)
         ↓
 Step 5: Check Trigger (T1-T3)
         ↓
-Step 6: Output report
+Step 6: Check Scripts (SC1-SC8) — skip if no scripts/
+        ↓
+Step 7: Output report
 ```
 
 ### Output Format
@@ -113,7 +120,10 @@ Step 6: Output report
 | Format | x | x | x |
 | Content | x | x | x |
 | Trigger | x | x | x |
+| Scripts | x | x | x |
 | **Total** | **x** | **x** | **x** |
+
+> Omit the Scripts row and exclude it from the total when the skill has no `scripts/` directory.
 
 ---
 
@@ -271,8 +281,11 @@ Step 7: (Optional) Generate execution plan if user adopts suggestions
 **Solution**: Use kebab-case (e.g., `my-skill-name`)
 
 ### Warning: "SKILL.md too long"
-**Cause**: File exceeds 300 lines
+**Cause**: File exceeds 500 lines
 **Solution**: Move detailed content to `references/` folder
+
+> The documented threshold is **under 500 lines** for the `SKILL.md` body. Files past ~350 lines
+> are worth a heads-up, but only 500+ is a must-fix.
 
 ---
 
@@ -280,10 +293,14 @@ Step 7: (Optional) Generate execution plan if user adopts suggestions
 
 | Document | Content |
 |----------|---------|
-| `references/definition-checklist.md` | Definition review: 20-item checklist |
+| `references/definition-checklist.md` | Definition review: full checklist (S/F/C/T + conditional SC) |
 | `references/definition-report.md` | Definition review: report template |
 | `references/input-guide.md` | Execution review: four input dimensions |
 | `references/analysis-dimensions.md` | Execution review: three-layer checklist |
 | `references/scenarios.md` | Typical scenario guide |
 | `references/report-templates.md` | Execution review: report templates |
 | `references/execution-guide.md` | Execution plan generation guide |
+
+> Every reference file above is linked directly from this `SKILL.md` — keep it that way.
+> A file reachable only through another reference file is likely to be read only partially
+> (see `references/definition-checklist.md`, item C11).

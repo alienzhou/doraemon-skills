@@ -1,5 +1,20 @@
 # Three-Layer Analysis Checklist
 
+## Contents
+
+- **L1: Engineering Correctness** — tool calls, script errors, linter/syntax, infinite loops
+  - Checklist / Error Keywords / Loop Detection Rules
+- **L2: Goal Achievement** — goal understanding, key steps, output quality
+  - Checklist / Rating Standards / Process Comparison Method
+- **L3: Optimization Space** — efficiency, implementation, conciseness (MUST check all three)
+  - [MUST] Efficiency Optimization
+  - [MUST] Tool/Implementation Optimization
+  - [MUST] Conciseness Check
+  - [OPTIONAL] Execution Plan Generation
+- **Common Issues Quick Reference** — by-layer triage for L1 / L2 / L3
+
+---
+
 ## L1: Engineering Correctness
 
 ### Checklist
@@ -229,7 +244,8 @@ When user adopts suggestions, generate execution plan with:
 - [ ] Examples included where helpful
 - [ ] Tone shifted to imperative (second person)
 
-> See `references/execution-guide.md` for detailed execution plan generation rules
+> Execution-plan generation rules live in the Execution Plan Generation Guide,
+> which `SKILL.md` links to directly.
 
 ---
 

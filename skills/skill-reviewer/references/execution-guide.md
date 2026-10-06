@@ -1,5 +1,17 @@
 # Execution Plan Generation Guide
 
+## Contents
+
+- **When to Generate** — trigger conditions for producing an execution plan
+- **Context Loading Map Template** — L0 → L3 progressive loading table
+- **Best Practices Checklist** — modular design, progressive disclosure, activation, errors, docs
+- **Execution Steps Template** — trackable step format plus MUST-FOLLOW rules
+- **Verification Checklist** — completeness, correctness, standards, functionality
+- **Complete Example** — a worked plan for adding an input-validation step
+- **Interaction Flow** — how the plan is presented and adopted
+
+---
+
 ## When to Generate
 
 Generate execution plan when user:
@@ -15,7 +27,7 @@ Progressive loading strategy (L0 → L3):
 |-------|-------------|-------------|---------|
 | L0 | Core files to modify | Immediately | `skills/xxx/SKILL.md` |
 | L1 | Reference implementations | Before modification | Similar patterns, related SKILL.md |
-| L2 | Best practice docs | As reference | `references/patterns.md` |
+| L2 | Best practice docs | As reference | `<target-skill>/references/patterns.md` |
 | L3 | External dependencies | On-demand | API docs, conventions |
 
 **Loading Principle**: Metadata first (~100 tokens) → Full content only when needed
@@ -126,9 +138,9 @@ Use imperative tone (second person) and trackable check-boxes:
 
 | Level | Context | Load Timing | Purpose |
 |-------|---------|-------------|---------|
-| L0 | `skills/my-skill/SKILL.md` | Immediately | Add workflow step |
-| L1 | `references/input-guide.md` | Before mod | Reference requirements |
-| L2 | `references/patterns.md` | Reference | Validation patterns |
+| L0 | `<target-skill>/SKILL.md` | Immediately | Add workflow step |
+| L1 | `<target-skill>/references/input-guide.md` | Before mod | Reference requirements |
+| L2 | `<target-skill>/references/patterns.md` | Reference | Validation patterns |
 
 ### Best Practices Checklist
 
@@ -156,7 +168,7 @@ Use imperative tone (second person) and trackable check-boxes:
     Verify: Step added with correct numbering
 
 [ ] Step 3: **Update Input Guide**
-    Action: In `references/input-guide.md`, add:
+    Action: In `<target-skill>/references/input-guide.md`, add:
     - Required fields: id, name, email
     - Type constraints: id (number), email (valid format)
     Verify: File saved and content verified

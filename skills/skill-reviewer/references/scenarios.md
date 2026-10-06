@@ -1,5 +1,21 @@
 # Typical Analysis Scenarios Guide
 
+## Contents
+
+- **Default Mode: Definition Review** — which mode applies when
+- **Mode A: Definition Review**
+  - Scenario A1: Pre-publish Check
+  - Scenario A2: Post-modification Validation
+  - Scenario A3: Quality Improvement
+- **Mode B: Execution Review**
+  - Scenario B1: Quick Troubleshooting
+  - Scenario B2: Skill Execution Analysis
+  - Scenario B3: Tool Execution Analysis
+  - Scenario B4: Agent Deep Analysis
+- **Scenario Selection Guide** — decision tree for picking a scenario
+
+---
+
 ## Default Mode: Definition Review
 
 **Default behavior**: When user says "review skill", use **Definition Review** mode.
@@ -39,20 +55,25 @@ Step 3: Check Format (F1-F5)
         - name field correct?
         - description field present?
         
-Step 4: Check Content (C1-C8)
+Step 4: Check Content (C1-C12)
         - Description has WHAT and WHEN?
         - Instructions actionable?
         - Examples provided?
+        - No time-sensitive info? Consistent terminology?
+        - References one level deep? Workflows have clear steps?
         
 Step 5: Check Trigger (T1-T3)
         - Trigger phrases clear?
         - Scope appropriate?
         
-Step 6: Output report with Summary + Details + Comments
+Step 6: Check Scripts (SC1-SC8) — skip if no scripts/
+        - Dependencies declared? Errors handled?
+        - All paths forward-slash?
+        
+Step 7: Output report with Summary + Details + Comments
 ```
 
-> See `references/definition-checklist.md` for complete checklist
-> See `references/definition-report.md` for report template
+> The complete checklist and the report template are both linked directly from `SKILL.md`.
 
 ---
 
@@ -68,7 +89,7 @@ Step 6: Output report with Summary + Details + Comments
 **Workflow:**
 ```
 Step 1: Read current Skill state
-Step 2: Run full checklist (S1-T3)
+Step 2: Run full checklist (S1-S4, F1-F5, C1-C12, T1-T3, + SC1-SC8 if scripts/ exists)
 Step 3: Focus on areas likely affected by changes
 Step 4: Output report highlighting potential issues
 ```

@@ -1,5 +1,16 @@
 # Four Input Dimensions - Detailed Guide
 
+## Contents
+
+- **Overview** — the four inputs and their required/optional status
+- **Input 1: Execution Trace (Required)** — what to include, how to obtain it
+- **Input 2: Execution Goal (Required)** — key points and examples
+- **Input 3: Implementation Reference (Optional)** — Skill analysis, Tool analysis, mixed
+- **Input 4: Agent Implementation (Optional)** — when applicable, what to read
+- **Input Combination Scenarios** — minimal / skill / tool / agent analysis setups
+
+---
+
 ## Overview
 
 ```

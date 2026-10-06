@@ -1,5 +1,16 @@
 # Report Templates
 
+## Contents
+
+- **Template Selection** — brief vs complete report
+- **Brief Report** — quick review, three-layer conclusion, key issues, priority fixes
+- **Complete Report** — full structure with Basic Information / L1 / L2 / L3 / Summary
+- **Execution Plan Template** — plan block emitted when suggestions are adopted
+- **Agent Deep Analysis Supplement** — extra section for agent implementation analysis
+- **Report Example** — a fully worked skill analysis report
+
+---
+
 ## Template Selection
 
 | Scenario | Recommended Template |
@@ -168,7 +179,8 @@ Suitable for formal analysis, complete structure.
 
 When user adopts L3 suggestions, generate execution plan.
 
-> See `references/execution-guide.md` for complete execution plan generation guide, including:
+> The Execution Plan Generation Guide (linked directly from `SKILL.md`) covers the complete
+> template, including:
 > - Context Loading Map template
 > - Best Practices Checklist
 > - Execution Steps format

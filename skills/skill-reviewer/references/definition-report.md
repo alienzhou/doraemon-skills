@@ -1,5 +1,16 @@
 # Definition Review Report Template
 
+## Contents
+
+- **Report Structure** — the four blocks every report contains
+- **Complete Template** — full markdown template with all check rows
+- **Brief Template** — condensed table for quick reviews
+- **Status Formatting Rules** — how ✅ / ⚠️ / ❌ are written
+- **Review Comments Guidelines** — what goes in Strengths / Improvements / Alignment
+- **Checklist for Report Generation** — pre-output self-check
+
+---
+
 ## Report Structure
 
 ```
@@ -26,7 +37,11 @@
 | Format | {n} | {n} | {n} |
 | Content | {n} | {n} | {n} |
 | Trigger | {n} | {n} | {n} |
+| Scripts | {n} | {n} | {n} |
 | **Total** | **{n}** | **{n}** | **{n}** |
+
+> If the skill has no `scripts/` directory, write `N/A` in the Scripts row and exclude it
+> from the Total.
 
 ---
 
@@ -60,6 +75,10 @@
 - ⚠️ **C7 Progressive disclosure** — SKILL.md is {n} lines, consider splitting
   > 💡 Move detailed content to references/ to reduce context load
 - ✅ **C8 Critical instructions** — Key points highlighted with CRITICAL marker
+- ✅ **C9 No time-sensitive info** — No expiring dates, versions, or "latest" claims
+- ✅ **C10 Consistent terminology** — One name per concept across SKILL.md and references/
+- ✅ **C11 References one level deep** — All reference files linked directly from SKILL.md
+- ✅ **C12 Workflows have clear steps** — Multi-step work is ordered and trackable
 
 ## 🎯 Trigger
 
@@ -67,6 +86,21 @@
 - ⚠️ **T2 Trigger scope** — May trigger on related but different tasks
   > 💡 Consider narrowing scope or adding negative triggers
 - ✅ **T3 Negative triggers** — Clearly excludes unrelated scenarios
+
+## 🛠️ Scripts
+
+> Only include this section when the skill ships a `scripts/` directory. Otherwise write a single
+> line: `> N/A — skill has no scripts/ directory.` and omit it from the total.
+
+- ✅ **SC1 Solve, don't defer** — Scripts perform the work rather than returning instructions
+- ✅ **SC2 No voodoo constants** — Hard-coded values carry justifying comments
+- ✅ **SC3 Dependencies declared** — Install line present and listed in SKILL.md
+- ⚠️ **SC4 Script documentation** — Purpose clear, usage under-documented
+  > 💡 Add a usage/docstring header naming inputs and outputs
+- ✅ **SC5 Forward slash paths** — No Windows-style backslashes
+- ✅ **SC6 Explicit error handling** — Failures name the cause and next action
+- ✅ **SC7 Validation for critical ops** — Preconditions checked before destructive actions
+- ✅ **SC8 Feedback loops** — Validator → fix → repeat present for quality-critical tasks
 
 ---
 
@@ -101,10 +135,11 @@ For quick reviews, use this condensed format:
 |-------|--------|-------|
 | Structure (S1-S4) | ✅ 4/4 | All pass |
 | Format (F1-F5) | ⚠️ 4/5 | F3: description long |
-| Content (C1-C8) | ⚠️ 6/8 | C4: no troubleshooting, C7: long |
+| Content (C1-C12) | ⚠️ 10/12 | C4: no troubleshooting, C7: long |
 | Trigger (T1-T3) | ✅ 3/3 | All pass |
+| Scripts (SC1-SC8) | N/A | No scripts/ directory |
 
-**Overall:** 17/20 pass, 3 warnings, 0 failures
+**Overall:** 21/24 pass, 3 warnings, 0 failures
 
 **Priority Fixes:**
 1. Add troubleshooting section
@@ -135,8 +170,8 @@ Example:
 
 Example:
 ```markdown
-- ⚠️ **C7 Progressive disclosure** — SKILL.md is 250 lines
-  > 💡 Consider moving detailed content to references/
+- ⚠️ **C7 Progressive disclosure** — SKILL.md is 380 lines
+  > 💡 Consider moving detailed content to references/ before it passes 500
 ```
 
 ### Fail (❌)
@@ -177,11 +212,13 @@ Keep each point to 1-2 sentences with clear action.
 ### Best Practice Alignment
 
 Compare against these principles:
-- Progressive disclosure (L1 → L2 → L3)
+- Progressive disclosure (metadata → SKILL.md → references/)
 - Composability (works with other skills)
-- Portability (works across environments)
+- Portability (works across environments and models)
 - Description pattern (WHAT + WHEN + triggers)
 - Standard structure (SKILL.md + scripts/ + references/ + assets/)
+- Reference depth (one level deep from SKILL.md)
+- Degrees of freedom matched to task fragility
 
 Use ✅/⚠️/❌ markers for quick visual scan.
 
@@ -192,7 +229,7 @@ Use ✅/⚠️/❌ markers for quick visual scan.
 Before outputting report:
 
 - [ ] Summary table counts are accurate
-- [ ] All 20 checks are listed
+- [ ] All applicable checks are listed (Scripts row omitted or N/A when no `scripts/`)
 - [ ] Each status has appropriate symbol (✅/⚠️/❌)
 - [ ] Warnings and failures include 💡 suggestions
 - [ ] Review Comments has all 3 sections
