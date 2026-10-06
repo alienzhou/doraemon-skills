@@ -1,0 +1,41 @@
+skills/skill-reviewer/SKILL.md
+  s_23cfb13eca6518::t_8122175071ac6f 41,51,53-54,81,83,85-88,99,103-105,123,126-127,284,287-289,296,303-306
+skills/skill-reviewer/references/definition-report.md
+  s_23cfb13eca6518::t_3f78ff2a79a7ea 3-13,40,43-45,78-81,90-104,138,140,142,173-174,215,217,220-221,232
+skills/skill-reviewer/references/analysis-dimensions.md
+  s_a5d2753f03cae1::t_b5fdae6a751415 3-17,247-248
+skills/skill-reviewer/references/definition-checklist.md
+  s_a5d2753f03cae1::t_9c97aa5979654d 3-20,65-66,70-74,116-118,121-124,136,193-194,334-335,339-342,433-642,664-668,673-686
+skills/skill-reviewer/references/execution-guide.md
+  s_a5d2753f03cae1::t_bd3db0f21b635b 3-14,30,141-143,171
+skills/skill-reviewer/references/input-guide.md
+  s_a5d2753f03cae1::t_86ca3c47ff83ed 3-13
+skills/skill-reviewer/references/report-templates.md
+  s_a5d2753f03cae1::t_a7d3f9fa0d49a4 3-13,182-183
+skills/skill-reviewer/references/scenarios.md
+  s_a5d2753f03cae1::t_4e048ea6468784 3-18,58,62-63,69-73,76,92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e7463574214016e858fe483c8606a8e203be096c",
+  "prompts": {},
+  "sessions": {
+    "s_23cfb13eca6518": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a110e1-7c84-7fc3-93c3-ad84abde6e30",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    },
+    "s_a5d2753f03cae1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_a5d2753f03cae1",
+        "model": "unknown"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
