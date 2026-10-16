@@ -1,0 +1,47 @@
+skills/talking-head-studio/SKILL.md
+  s_58249cd92a0ae1::t_5ad3a54afeb025 1-61
+skills/talking-head-studio/agents/openai.yaml
+  s_cad518d5a3453f::t_1938d85ce61206 1-4
+skills/talking-head-studio/assets/render_background.py
+  s_d51325b97b88f6::t_fa9ce074aab7b1 1-166
+skills/talking-head-studio/assets/requirements-render.txt
+  s_58249cd92a0ae1::t_ef51fe2d187c8a 1
+skills/talking-head-studio/references/production.md
+  s_58249cd92a0ae1::t_11cf8202c9bb04 1-59
+skills/talking-head-studio/references/toolkit.md
+  s_58249cd92a0ae1::t_d46cfdc6642558 1-111
+skills/talking-head-studio/scripts/video_tools.py
+  s_58249cd92a0ae1::t_d26547087ddb40 1-197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "82b05bc477a8559ec10c6b5e4dfad898ea2aae29",
+  "prompts": {},
+  "sessions": {
+    "s_58249cd92a0ae1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1198d-b190-7831-9f03-1ebf6c0f5117",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    },
+    "s_cad518d5a3453f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12bb6-22d4-72a1-b938-8224f50a31dd",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    },
+    "s_d51325b97b88f6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12bec-d3d4-7332-9dff-af430429998a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
