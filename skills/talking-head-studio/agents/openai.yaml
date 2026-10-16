@@ -1,0 +1,4 @@
+interface:
+  display_name: "口播图解视频"
+  short_description: "把口播做成主线贯穿的动态图解视频，支持常驻人像小窗与可编辑工程"
+  default_prompt: "请用 $talking-head-studio 处理这条口播：围绕核心观点做动态图解，人像全程保留小窗，保留原声，不加口播字幕和背景音乐，先做一小段样片。"
