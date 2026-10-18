@@ -1,0 +1,29 @@
+packages/discuss-for-specs/AGENTS.md
+  s_a6b25cfbe47dd8::t_f2fec15c20b267 197,201-203,205
+packages/discuss-for-specs/scripts/build.js
+  s_a6b25cfbe47dd8::t_5607f611ad459b 5-6,33-34,36,52-69,111-112,194,259-260,292-297
+packages/discuss-for-specs/tests/build.test.js
+  s_a6b25cfbe47dd8::t_5258942dae08bb 1-80
+skills/discuss-for-specs/SKILL.md
+  s_a6b25cfbe47dd8::t_5607f611ad459b 1-6
+.gitignore
+  s_a6b25cfbe47dd8::t_5607f611ad459b 57-58
+packages/discuss-for-specs/config-src/default.yaml
+  s_a6b25cfbe47dd8::t_5607f611ad459b 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8badcf2d9b2ef63bcb8fe91e2ac4902aa77a7d37",
+  "prompts": {},
+  "sessions": {
+    "s_a6b25cfbe47dd8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14cbd-9ca2-7c43-9e1b-e851aec44d1b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
