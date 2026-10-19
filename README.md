@@ -68,7 +68,7 @@ npx @vibe-x/agent-better-checkpoint --platform cursor
 |-------|------|-----|
 | [xhs-news-studio](skills/xhs-news-studio/) | 报告/话题 → 小红书资讯图文：编辑流程、参考案例、自由设计与可运行制图骨架 | — |
 | [talking-head-studio](skills/talking-head-studio/) | 口播 → 围绕核心观点的动态图解视频，支持人像小窗、样片和可编辑工程 | — |
-| [video-cover-studio](skills/video-cover-studio/) | 视频封面：抽真帧做证据，按平台安全区排版，挂 Q 版 IP 形象 | — |
+| [video-cover-studio](skills/video-cover-studio/) | 面向观众需求的视频封面，支持真人轻修、真实截图、IP 和五种比例 | — |
 | [xhs-intake](skills/xhs-intake/) | 解析小红书笔记（视频 / 图文）为可回溯的结构化内容 | — |
 
 ### 工具与质量
