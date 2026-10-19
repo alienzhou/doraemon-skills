@@ -1,0 +1,29 @@
+README.md
+  s_bd742668057a46::t_5d9eeca8fb914d 71
+skills/video-cover-studio/SKILL.md
+  s_bd742668057a46::t_8a1f61fc3cafa0 3,8,10-21,28,57-61,71,73,75-77,88,98-99,107-109,111,113,123,151-152,170-171
+skills/video-cover-studio/references/audience-first-covers.md
+  s_bd742668057a46::t_c82b1eb207b4fa 1-32
+skills/video-cover-studio/references/copywriting.md
+  s_bd742668057a46::t_a287fd4f68d64f 7,9-13,26,34,36,38,44,47-50,65
+skills/video-cover-studio/references/cover-playbook.md
+  s_bd742668057a46::t_626f7f5607e6b9 3,7,9,12,14-15,17-18,20-21,24,26-27,29-30,76,104,110,112,118,127,130
+skills/video-cover-studio/references/real-person-retouch.md
+  s_bd742668057a46::t_4e17490a184e3b 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d6384a20af0c2ce839afe4dfb4083f066d80a403",
+  "prompts": {},
+  "sessions": {
+    "s_bd742668057a46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a154fd-ade7-73d1-8284-e98d11394eac",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "周鸿轩 <zhouhongxuan@BakMacBook-Pro.local>"
+    }
+  }
+}
